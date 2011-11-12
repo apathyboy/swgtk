@@ -24,7 +24,7 @@ std::string Tre::GetVersion() const
     return header_.version;
 }
 
-TreHeader Tre::ReadHeader(ifstream& file_stream)
+TreHeader Tre::ReadHeader(ifstream& file_stream) const
 {
     ValidateFileType(file_stream);
 
@@ -34,7 +34,7 @@ TreHeader Tre::ReadHeader(ifstream& file_stream)
     return header;
 }
 
-std::string Tre::ReadFileType(ifstream& file_stream)
+std::string Tre::ReadFileType(ifstream& file_stream) const
 {    
     std::string file_type;
 
@@ -44,7 +44,7 @@ std::string Tre::ReadFileType(ifstream& file_stream)
     return file_type;
 }
 
-std::string Tre::ReadVersion(ifstream& file_stream)
+std::string Tre::ReadVersion(ifstream& file_stream) const
 {
     std::string version;
 
@@ -54,7 +54,7 @@ std::string Tre::ReadVersion(ifstream& file_stream)
     return version;
 }
 
-void Tre::ValidateFileType(ifstream& file_stream)
+void Tre::ValidateFileType(ifstream& file_stream) const
 {
     std::string file_type = ReadFileType(file_stream);
 

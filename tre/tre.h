@@ -22,10 +22,10 @@ namespace tre
 
         std::string GetVersion() const;
 
-        TreHeader ReadHeader(std::ifstream& file_stream);
-        std::string ReadFileType(std::ifstream& file_stream);
-        std::string ReadVersion(std::ifstream& file_stream);
-        void ValidateFileType(std::ifstream& file_stream);
+        TreHeader ReadHeader(std::ifstream& file_stream) const;
+        std::string ReadFileType(std::ifstream& file_stream) const;
+        std::string ReadVersion(std::ifstream& file_stream) const;
+        void ValidateFileType(std::ifstream& file_stream) const;
 
     private:
         Tre();
