@@ -25,5 +25,5 @@ int main(int argc, char *argv[])
         cout << "   Version: " << tre_file.GetVersion() << endl;
     }
 
-    return 0;        
+    return 0;
 }
