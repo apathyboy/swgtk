@@ -10,6 +10,7 @@ namespace tre
 {
     struct TreHeader
     {
+        std::string type;
         std::string version;
     };
 
@@ -22,6 +23,7 @@ namespace tre
         std::string GetVersion() const;
         
         TreHeader ReadHeader(std::ifstream& file_stream);
+        void ValidateFileType(std::ifstream& file_stream);
         
     private:
         Tre();
