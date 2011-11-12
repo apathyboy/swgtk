@@ -21,13 +21,14 @@ namespace tre
         ~Tre();
 
         std::string GetVersion() const;
-        
+
         TreHeader ReadHeader(std::ifstream& file_stream);
+        std::string ReadFileType(std::ifstream& file_stream);
         void ValidateFileType(std::ifstream& file_stream);
-        
+
     private:
         Tre();
-        
+
         TreHeader header_;
         std::string filename_;
     };     
