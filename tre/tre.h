@@ -24,6 +24,7 @@ namespace tre
 
         TreHeader ReadHeader(std::ifstream& file_stream);
         std::string ReadFileType(std::ifstream& file_stream);
+        std::string ReadVersion(std::ifstream& file_stream);
         void ValidateFileType(std::ifstream& file_stream);
 
     private:
