@@ -5,24 +5,26 @@ using namespace std;
 using namespace tre;
 
 Tre::Tre(const string& filename)
+: filename_(filename)
 {
-    file_stream_.exceptions(ifstream::failbit | ifstream::badbit);
-    file_stream_.open(filename.c_str(), ios_base::binary);
+    ifstream file_stream;
+    file_stream.exceptions(ifstream::failbit | ifstream::badbit);
+    file_stream.open(filename_.c_str(), ios_base::binary);
 
-    ReadHeader_(file_stream_);
+    header_ = ReadHeader(file_stream);
+
+    file_stream.close();
 }
 
 Tre::~Tre()
-{
-    file_stream_.close();
-}
+{}
 
 std::string Tre::GetVersion() const
 {
-    return version_;
+    return header_.version;
 }
         
-void Tre::ReadHeader_(ifstream& file_stream)
+TreHeader Tre::ReadHeader(ifstream& file_stream)
 {
     std::string file_type;
 
@@ -33,7 +35,11 @@ void Tre::ReadHeader_(ifstream& file_stream)
     {
         throw runtime_error("Invalid tre file format");
     }
+
+    TreHeader header;
     
     file_stream.width(4);
-    file_stream >> version_;
+    file_stream >> header.version;
+
+    return header;
 }

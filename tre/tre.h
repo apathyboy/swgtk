@@ -8,6 +8,11 @@
 
 namespace tre 
 {
+    struct TreHeader
+    {
+        std::string version;
+    };
+
     class Tre
     {
     public:
@@ -15,14 +20,14 @@ namespace tre
         ~Tre();
 
         std::string GetVersion() const;
-
+        
+        TreHeader ReadHeader(std::ifstream& file_stream);
+        
     private:
         Tre();
-
-        void ReadHeader_(std::ifstream& file_stream);
-
-        std::ifstream file_stream_;
-        std::string version_;
+        
+        TreHeader header_;
+        std::string filename_;
     };     
 }  // namespace tre
 
