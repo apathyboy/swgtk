@@ -98,34 +98,7 @@ std::string TreReader::ReadFileVersion(ifstream& file_stream) const
 
 vector<TreFileInfo> TreReader::ReadFileBlock(TreHeader header, ifstream& file_stream) const
 {
-    file_stream.seekg(header.file_info.offset, ios_base::beg);
-
-    vector<char> data(header.file_info.size);
-
-    if (header.file_info.compression == 0)
-    {
-        file_stream.read(&data[0], header.file_info.size);
-    }
-    else if (header.file_info.compression == 2)
-    {
-        vector<char> compressed_data(header.file_info.compressed_size);
-        file_stream.read(&compressed_data[0], header.file_info.compressed_size);
-
-        int result = uncompress(
-            reinterpret_cast<Bytef*>(&data[0]),
-            reinterpret_cast<uLongf*>(&header.file_info.size),
-            reinterpret_cast<Bytef*>(&compressed_data[0]),
-            header.file_info.compressed_size);
-
-        if (result != Z_OK)
-        {
-            throw std::runtime_error("ZLib error: " + result);
-        }
-    }
-    else
-    {
-        throw std::runtime_error("Unknown format");
-    }
+    vector<char> data = header.file_info.ReadDataBlock(&file_stream);
 
     vector<TreFileInfo> files;
 
@@ -159,34 +132,7 @@ vector<TreFileInfo> TreReader::ReadFileBlock(TreHeader header, ifstream& file_st
 
 void TreReader::ReadFileNames(TreHeader header, vector<TreFileInfo>& files, ifstream& file_stream) const
 {
-    file_stream.seekg(header.file_name.offset, ios_base::beg);
-
-    vector<char> data(header.file_name.size);
-
-    if (header.file_name.compression == 0)
-    {
-        file_stream.read(&data[0], header.file_name.size);
-    }
-    else if (header.file_name.compression == 2)
-    {
-        vector<char> compressed_data(header.file_name.compressed_size);
-        file_stream.read(&compressed_data[0], header.file_name.compressed_size);
-
-        int result = uncompress(
-            reinterpret_cast<Bytef*>(&data[0]),
-            reinterpret_cast<uLongf*>(&header.file_name.size),
-            reinterpret_cast<Bytef*>(&compressed_data[0]),
-            header.file_name.compressed_size);
-
-        if (result != Z_OK)
-        {
-            throw std::runtime_error("ZLib error: " + result);
-        }
-    }
-    else
-    {
-        throw std::runtime_error("Unknown format");
-    }
+    vector<char> data = header.file_name.ReadDataBlock(&file_stream);
 
     for_each(
         begin(files),
