@@ -5,6 +5,9 @@ project(swgtoolkit CXX)
 # set the path for custom cmake scripts
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/build-aux/cmake")
 
+# include common scripts
+include(GroupSourcesByFilesystem)
+
 if(DEFINED VENDOR_PREFIX)
     set(BOOST_ROOT ${VENDOR_PREFIX}/boost)
     set(ZLIB_ROOT ${VENDOR_PREFIX}/zlib)
