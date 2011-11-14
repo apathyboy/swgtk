@@ -1,38 +1,41 @@
 
-#ifndef TRE_TRE_H_
-#define TRE_TRE_H_
+#ifndef TRE_TRE_INFO_H_
+#define TRE_TRE_INFO_H_
 
 #include <cstdint>
 #include <fstream>
 #include <string>
 
-namespace tre 
-{
-    struct TreHeader
+namespace tre {
+    
+    struct TreDataBlockInfo
     {
-        std::string type;
-        std::string version;
+        uint32_t offset;
+        uint32_t compression;
+        uint32_t compressed_size;
+        uint32_t size;
+
+        std::vector<char> ReadDataBlock(std::ifstream* stream);
     };
 
-    class Tre
+    struct TreFileInfo
     {
-    public:
-        explicit Tre(const std::string& filename);
-        ~Tre();
+        std::string filename;
+        std::string md5sum;
+        uint32_t checksum;
+        uint32_t name_offset;
+        TreDataBlockInfo file_data;
+    };
+    
+    struct TreHeader
+    {
+        std::string name;
+        uint32_t record_count;
+        TreDataBlockInfo file_info;
+        TreDataBlockInfo file_name;
+    };
 
-        std::string GetVersion() const;
-
-        TreHeader ReadHeader(std::ifstream& file_stream) const;
-        std::string ReadFileType(std::ifstream& file_stream) const;
-        std::string ReadVersion(std::ifstream& file_stream) const;
-        void ValidateFileType(std::ifstream& file_stream) const;
-
-    private:
-        Tre();
-
-        TreHeader header_;
-        std::string filename_;
-    };     
 }  // namespace tre
 
-#endif  // TRE_TRE_H_
+#endif  // TRE_TRE_INFO_H_
+
