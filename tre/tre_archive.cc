@@ -54,9 +54,12 @@ void TreArchive::BuildIndex(vector<string> index_files)
     for_each(
         begin(index_files),
         end(index_files),
-        [] (const std::string& filename)
+        [this] (const std::string& filename)
     {
+        auto file_index = tre_reader_.ReadIndex(filename);
 
+        tre_index_.insert(begin(file_index), end(file_index));
+        tre_list_.push_back(filename);
     });
 }
 
@@ -67,5 +70,20 @@ shared_ptr<TreResourceHandle> TreArchive::GetResourceHandle(const string& resour
 
 vector<string> TreArchive::GetTreList() const
 {
-    return vector<string>();
+    return tre_list_;
+}
+
+vector<string> TreArchive::ListAvailableResources() const
+{
+    vector<string> resource_list;
+
+    for_each(
+        begin(tre_index_),
+        end(tre_index_),
+        [&resource_list] (const unordered_map<string, TreFileInfo>::value_type& item)
+    {
+        resource_list.push_back(item.first);
+    });
+
+    return resource_list;
 }

@@ -5,7 +5,10 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
+
+#include <tre/tre_reader.h>
 
 namespace tre
 {
@@ -42,8 +45,12 @@ namespace tre
 
         std::vector<std::string> GetTreList() const;
 
+        std::vector<std::string> ListAvailableResources() const;
+
     public:
+        std::unordered_map<std::string, TreFileInfo> tre_index_;
         std::vector<std::string> tre_list_;
+        TreReader tre_reader_;
     };
 }
 
