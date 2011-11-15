@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
         TreArchive archive;
 
         vector<string> index_files;
-        index_files.push_back(swg_directory + "/bottom.tre");
+        index_files.push_back(swg_directory + "/patch_00.tre");
 
         archive.BuildIndex(index_files);
 
@@ -34,17 +34,17 @@ int main(int argc, char *argv[])
         cout << "Loading resources from the following files:\n\n";
         copy(begin(files), end(files), ostream_iterator<string>(cout, "\n")); 
 
-        auto handle = archive.GetResourceHandle(resource_name);
-
-        cout << "\nLoaded resource from archive:\n\n"
-             << "   Name: " << handle->GetFilename() << "\n"
-             << "   Tre: " << handle->GetTreFilename() << "\n"
-             << "   Filesize: " << handle->GetFileSize() << "\n"
-             << "   Filesize (compressed): " << handle->GetCompressedFileSize() << "\n"
-             << "   MD5: " << handle->GetMd5Hash() << "\n\n"
-             << endl;
-
-        PrintHexView(handle);
+        //auto handle = archive.GetResourceHandle(resource_name);
+        //
+        //cout << "\nLoaded resource from archive:\n\n"
+        //     << "   Name: " << handle->GetFilename() << "\n"
+        //     << "   Tre: " << handle->GetTreFilename() << "\n"
+        //     << "   Filesize: " << handle->GetFileSize() << "\n"
+        //     << "   Filesize (compressed): " << handle->GetCompressedFileSize() << "\n"
+        //     << "   MD5: " << handle->GetMd5Hash() << "\n\n"
+        //     << endl;
+        //
+        //PrintHexView(handle);
     }
 
     return 0;
