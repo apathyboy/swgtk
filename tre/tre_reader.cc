@@ -9,7 +9,7 @@
 using namespace std;
 using namespace tre;
 
-vector<TreFileInfo> TreReader::ReadIndex(const string& archive_name)
+unordered_map<string, TreFileInfo> TreReader::ReadIndex(const string& archive_name)
 {
     TreHeader header = ReadHeader(archive_name);
     
@@ -23,7 +23,17 @@ vector<TreFileInfo> TreReader::ReadIndex(const string& archive_name)
     ReadFileNames(header, data, file_stream);
     ReadMd5Sums(header, data, file_stream);
 
-    return data;
+    unordered_map<string, TreFileInfo> index;
+
+    for_each(
+        begin(data),
+        end(data),
+        [&index] (TreFileInfo& info)
+    {
+        index.insert(make_pair(info.filename, move(info)));
+    });
+
+    return index;
 }
 
 TreHeader TreReader::ReadHeader(const string& archive_name)

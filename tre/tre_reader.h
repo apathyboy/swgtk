@@ -4,6 +4,7 @@
 
 #include <fstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <tre/tre.h>
@@ -13,7 +14,7 @@ namespace tre {
     class TreReader
     {
     public:
-        std::vector<TreFileInfo> ReadIndex(const std::string& archive_name);
+        std::unordered_map<std::string, TreFileInfo> ReadIndex(const std::string& archive_name);
         TreHeader ReadHeader(const std::string& archive_name);
 
         std::string ReadFileType(std::ifstream& file_stream) const;
