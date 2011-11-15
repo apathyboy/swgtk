@@ -8,6 +8,10 @@
 using namespace std;
 using namespace tre;
 
+TreResourceHandle::TreResourceHandle(const TreFileInfo& tre_info)
+    : file_info_(tre_info)
+{}
+
 const vector<char>& TreResourceHandle::GetBuffer() const
 {
     return buffer_;
@@ -15,27 +19,17 @@ const vector<char>& TreResourceHandle::GetBuffer() const
 
 const string& TreResourceHandle::GetFilename() const
 {
-    return filename_;
-}
-
-const string& TreResourceHandle::GetTreFilename() const
-{
-    return tre_filename_;
+    return file_info_.filename;
 }
 
 uint32_t TreResourceHandle::GetFileSize() const
 {
-    return file_size_;
-}
-
-uint32_t TreResourceHandle::GetCompressedFileSize() const
-{
-    return compressed_file_size_;
+    return file_info_.file_data.size;
 }
 
 const string& TreResourceHandle::GetMd5Hash() const
 {
-    return md5_hash_;
+    return file_info_.md5sum;
 }
 
 TreArchive::TreArchive()
@@ -65,7 +59,24 @@ void TreArchive::BuildIndex(vector<string> index_files)
 
 shared_ptr<TreResourceHandle> TreArchive::GetResourceHandle(const string& resource_name)
 {
-    return make_shared<TreResourceHandle>();
+    auto find_resource_iter = resource_handles_.find(resource_name);
+    if (find_resource_iter != resource_handles_.end())
+    {
+        return find_resource_iter->second;
+    }
+
+    auto find_file_info_iter = tre_index_.find(resource_name);
+
+    if (find_file_info_iter == tre_index_.end())
+    {
+        throw std::runtime_error("Requested unknown resource " + resource_name);
+    }
+
+    auto resource_handle = make_shared<TreResourceHandle>(find_file_info_iter->second);
+
+    resource_handles_.insert(make_pair(resource_name, resource_handle));
+
+    return resource_handle;
 }
 
 vector<string> TreArchive::GetTreList() const

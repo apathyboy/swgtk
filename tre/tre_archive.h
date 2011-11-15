@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include <tre/tre.h>
 #include <tre/tre_reader.h>
 
 namespace tre
@@ -17,20 +18,16 @@ namespace tre
     class TreResourceHandle
     {
     public:
+        explicit TreResourceHandle(const TreFileInfo& tre_info);
+
         const std::vector<char>& GetBuffer() const;
         const std::string& GetFilename() const;
-        const std::string& GetTreFilename() const;
         uint32_t GetFileSize() const;
-        uint32_t GetCompressedFileSize() const;
         const std::string& GetMd5Hash() const;
 
     private:
+        const TreFileInfo& file_info_;
         std::vector<char> buffer_;
-        std::string filename_;
-        std::string tre_filename_;
-        std::string md5_hash_;
-        uint32_t file_size_;
-        uint32_t compressed_file_size_;
     };
 
     class TreArchive
@@ -49,6 +46,7 @@ namespace tre
 
     public:
         std::unordered_map<std::string, TreFileInfo> tre_index_;
+        std::unordered_map<std::string, std::shared_ptr<TreResourceHandle>> resource_handles_;
         std::vector<std::string> tre_list_;
         TreReader tre_reader_;
     };
