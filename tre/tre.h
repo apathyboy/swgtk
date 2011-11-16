@@ -1,42 +1,48 @@
 
-#ifndef TRE_TRE_INFO_H_
-#define TRE_TRE_INFO_H_
+#ifndef TRE_H_
+#define TRE_H_
 
 #include <cstdint>
-#include <fstream>
 #include <string>
-#include <vector>
+#include <unordered_map>
 
 namespace tre {
-    
-    struct TreDataBlockInfo
-    {
-        uint32_t offset;
-        uint32_t compression;
-        uint32_t compressed_size;
-        uint32_t size;
 
-        std::vector<char> ReadDataBlock(std::ifstream* stream);
+#pragma pack(1)
+    struct TreHeader
+    {
+        char file_type[4];
+        char file_version[4];
+        uint32_t file_count;
+        uint32_t info_offset;
+        uint32_t info_compression;
+        uint32_t info_compressed_size;
+        uint32_t name_compression;
+        uint32_t name_compressed_size;
+        uint32_t name_uncompressed_size;
+    };
+    
+    struct TreFileInfo
+    {
+        uint32_t checksum;
+        uint32_t data_size;
+        uint32_t data_offset;
+        uint32_t data_compression;
+        uint32_t data_compressed_size;
+        uint32_t name_offset;
     };
 
-    struct TreFileInfo
+    struct TreResourceFile
     {
         std::string filename;
         std::string md5sum;
-        uint32_t checksum;
-        uint32_t name_offset;
-        TreDataBlockInfo file_data;
+        TreFileInfo info;
     };
-    
-    struct TreHeader
-    {
-        std::string name;
-        uint32_t record_count;
-        TreDataBlockInfo file_info;
-        TreDataBlockInfo file_name;
-    };
+#pragma pack()
+
+    typedef std::unordered_map<std::string, TreResourceFile> TreContentsMap;
 
 }  // namespace tre
 
-#endif  // TRE_TRE_INFO_H_
+#endif  // TRE_H_
 

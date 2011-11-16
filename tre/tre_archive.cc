@@ -8,7 +8,7 @@
 using namespace std;
 using namespace tre;
 
-TreResourceHandle::TreResourceHandle(const TreFileInfo& tre_info)
+TreResourceHandle::TreResourceHandle(const TreResourceFile& tre_info)
     : file_info_(tre_info)
 {}
 
@@ -24,7 +24,7 @@ const string& TreResourceHandle::GetFilename() const
 
 uint32_t TreResourceHandle::GetFileSize() const
 {
-    return file_info_.file_data.size;
+    return file_info_.info.data_size;
 }
 
 const string& TreResourceHandle::GetMd5Hash() const
@@ -50,10 +50,11 @@ void TreArchive::BuildIndex(vector<string> index_files)
         end(index_files),
         [this] (const std::string& filename)
     {
-        auto file_index = tre_reader_.ReadIndex(filename);
+        unique_ptr<TreReader> reader(new TreReader(filename));
+        auto file_index = reader->ReadIndex();
 
         tre_index_.insert(begin(file_index), end(file_index));
-        tre_list_.push_back(filename);
+        tre_list_.push_back(move(reader));
     });
 }
 
@@ -81,7 +82,17 @@ shared_ptr<TreResourceHandle> TreArchive::GetResourceHandle(const string& resour
 
 vector<string> TreArchive::GetTreList() const
 {
-    return tre_list_;
+    vector<string> tre_list;
+
+    for_each(
+        begin(tre_list_),
+        end(tre_list_),
+        [&tre_list] (const std::unique_ptr<TreReader>& item)
+    {
+        tre_list.push_back(item->GetFilename());
+    });
+
+    return tre_list;
 }
 
 vector<string> TreArchive::ListAvailableResources() const
@@ -91,7 +102,7 @@ vector<string> TreArchive::ListAvailableResources() const
     for_each(
         begin(tre_index_),
         end(tre_index_),
-        [&resource_list] (const unordered_map<string, TreFileInfo>::value_type& item)
+        [&resource_list] (const TreContentsMap::value_type& item)
     {
         resource_list.push_back(item.first);
     });

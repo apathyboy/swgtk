@@ -23,14 +23,32 @@ int main(int argc, char *argv[])
 
     {
         TreArchive archive;
-
+        
         vector<string> index_files;
-        index_files.push_back(swg_directory + "/patch_00.tre");
 
+        index_files.push_back(swg_directory + "/bottom.tre");
+        index_files.push_back(swg_directory + "/patch_01.tre");
+        index_files.push_back(swg_directory + "/patch_02.tre");
+        index_files.push_back(swg_directory + "/patch_03.tre");
+        index_files.push_back(swg_directory + "/patch_04.tre");
+        index_files.push_back(swg_directory + "/patch_05.tre");
+        index_files.push_back(swg_directory + "/patch_06.tre");
+        index_files.push_back(swg_directory + "/patch_07.tre");
+        index_files.push_back(swg_directory + "/patch_08.tre");
+        index_files.push_back(swg_directory + "/patch_09.tre");
+        index_files.push_back(swg_directory + "/patch_10.tre");
+        index_files.push_back(swg_directory + "/patch_11_00.tre");
+        index_files.push_back(swg_directory + "/patch_11_01.tre");
+        index_files.push_back(swg_directory + "/patch_11_02.tre");
+        index_files.push_back(swg_directory + "/patch_11_03.tre");
+        index_files.push_back(swg_directory + "/patch_12_00.tre");
+        index_files.push_back(swg_directory + "/patch_13_00.tre");
+        index_files.push_back(swg_directory + "/patch_14_00.tre");
+        
         archive.BuildIndex(index_files);
-
+        
         auto files = archive.GetTreList();
-
+        
         cout << "Loading resources from the following files:\n\n";
         copy(begin(files), end(files), ostream_iterator<string>(cout, "\n")); 
 

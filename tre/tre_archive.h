@@ -18,7 +18,7 @@ namespace tre
     class TreResourceHandle
     {
     public:
-        explicit TreResourceHandle(const TreFileInfo& tre_info);
+        explicit TreResourceHandle(const TreResourceFile& tre_info);
 
         const std::vector<char>& GetBuffer() const;
         const std::string& GetFilename() const;
@@ -26,7 +26,7 @@ namespace tre
         const std::string& GetMd5Hash() const;
 
     private:
-        const TreFileInfo& file_info_;
+        const TreResourceFile& file_info_;
         std::vector<char> buffer_;
     };
 
@@ -45,10 +45,9 @@ namespace tre
         std::vector<std::string> ListAvailableResources() const;
 
     public:
-        std::unordered_map<std::string, TreFileInfo> tre_index_;
+        TreContentsMap tre_index_;
         std::unordered_map<std::string, std::shared_ptr<TreResourceHandle>> resource_handles_;
-        std::vector<std::string> tre_list_;
-        TreReader tre_reader_;
+        std::vector<std::unique_ptr<TreReader>> tre_list_;
     };
 }
 

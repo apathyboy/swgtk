@@ -1,42 +1,31 @@
 
 #include <tre/tre.h>
 
-#include <zlib.h>
+#include <tre/tre_reader.h>
 
 using namespace std;
 using namespace tre;
 
-std::vector<char> TreDataBlockInfo::ReadDataBlock(std::ifstream* stream)
-{
-    stream->seekg(offset, ios_base::beg);
+//Tre::Tre(const string& filename)
+//: reader_(new TreReader(filename))
+//{
+//}
+//
+//uint32_t Tre::GetFileCount() const
+//{
+//    return reader_->GetHeader().file_count;
+//}
 
-    vector<char> data(size);
-
-    if (compression == 0)
-    {
-        stream->read(&data[0], size);
-    }
-    else if (compression == 2)
-    {
-        vector<char> compressed_data(compressed_size);
-        stream->read(&compressed_data[0], compressed_size);
-
-        int result = uncompress(
-            reinterpret_cast<Bytef*>(&data[0]),
-            reinterpret_cast<uLongf*>(&size),
-            reinterpret_cast<Bytef*>(&compressed_data[0]),
-            compressed_size);
-
-        if (result != Z_OK)
-        {
-            throw std::runtime_error("ZLib error: " + result);
-        }
-    }
-    else
-    {
-        throw std::runtime_error("Unknown format");
-    }
-
-    return data;
-}
-
+//const TreFileInfo& Tre::FindFileInfo(const std::string& filename) const
+//{}
+//
+//std::vector<char> Tre::ReadFile(const std::string& filename)
+//{}
+//
+//void Tre::ReadFile(const TreFileInfo& file, std::vector<char>& output)
+//{}
+//
+//TreContentsMap Tre::GenerateIndex()
+//{
+//}
+//

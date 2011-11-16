@@ -1,173 +1,109 @@
 
 #include <tre/tre_reader.h>
 
-#include <cstring>
 #include <algorithm>
-#include <sstream>
 #include <zlib.h>
 
 using namespace std;
 using namespace tre;
 
-unordered_map<string, TreFileInfo> TreReader::ReadIndex(const string& archive_name)
+TreReader::TreReader(std::string filename)
+: filename_(filename)
 {
-    TreHeader header = ReadHeader(archive_name);
-    
-    ifstream file_stream;
+    input_stream_.exceptions(ifstream::failbit | ifstream::badbit);
+    input_stream_.open(filename_.c_str(), ios_base::binary);
 
-    file_stream.exceptions(ifstream::failbit | ifstream::badbit);
-    file_stream.open(archive_name.c_str(), ios_base::binary);
+    ReadHeader();
+}
 
-    vector<TreFileInfo> data = ReadFileBlock(header, file_stream);
+TreContentsMap TreReader::ReadIndex()
+{    
+    vector<TreFileInfo> file_block = ReadFileBlock();
+    vector<char> name_block = ReadNameBlock();
+    vector<Md5Sum> md5_sum_block = ReadMd5SumBlock();
 
-    ReadFileNames(header, data, file_stream);
-    ReadMd5Sums(header, data, file_stream);
+    TreContentsMap index;
 
-    unordered_map<string, TreFileInfo> index;
-
-    for_each(
-        begin(data),
-        end(data),
-        [&index] (TreFileInfo& info)
+    transform(
+        begin(file_block),
+        end(file_block),
+        begin(md5_sum_block),
+        inserter(index, index.begin()),
+        [&name_block] (TreFileInfo& file_info, Md5Sum& md5_sum) -> TreContentsMap::value_type
     {
-        index.insert(make_pair(info.filename, move(info)));
+        TreResourceFile resource_file;
+        resource_file.filename = string(&name_block[file_info.name_offset]);
+        resource_file.md5sum = string(begin(md5_sum), end(md5_sum));
+        resource_file.info = move(file_info);
+
+        return make_pair(resource_file.filename, move(resource_file));
     });
 
     return index;
 }
 
-TreHeader TreReader::ReadHeader(const string& archive_name)
+const TreHeader& TreReader::GetHeader() const
 {
-    ifstream file_stream;
-
-    file_stream.exceptions(ifstream::failbit | ifstream::badbit);
-    file_stream.open(archive_name.c_str(), ios_base::binary);
-
-    ValidateFileType(ReadFileType(file_stream));
-    ValidateFileVersion(ReadFileVersion(file_stream));
-
-    TreHeader header;
-
-    header.name = archive_name;
-
-    file_stream.read(
-        reinterpret_cast<char*>(&header.record_count), 
-        sizeof(header.record_count));
-
-    file_stream.read(
-        reinterpret_cast<char*>(&header.file_info.offset), 
-        sizeof(header.file_info.offset));
-
-    file_stream.read(
-        reinterpret_cast<char*>(&header.file_info.compression), 
-        sizeof(header.file_info.compression));
-
-    file_stream.read(
-        reinterpret_cast<char*>(&header.file_info.compressed_size), 
-        sizeof(header.file_info.compressed_size));
-
-    file_stream.read(
-        reinterpret_cast<char*>(&header.file_name.compression), 
-        sizeof(header.file_name.compression));
-
-    file_stream.read(
-        reinterpret_cast<char*>(&header.file_name.compressed_size), 
-        sizeof(header.file_name.compressed_size));
-
-    file_stream.read(
-        reinterpret_cast<char*>(&header.file_name.size), 
-        sizeof(header.file_name.size));
-    
-    file_stream.close();
-
-    header.file_info.size = header.record_count * (sizeof(uint32_t) * 6); // 6 values read.
-    header.file_name.offset = header.file_info.offset + header.file_info.compressed_size;
-
-    return header;
+    return header_;
 }
 
-std::string TreReader::ReadFileType(ifstream& file_stream) const
-{    
-    std::string file_type;
-
-    file_stream.width(4);
-    file_stream >> file_type;
-
-    return file_type;
+const string& TreReader::GetFilename() const
+{
+    return filename_;
 }
 
-std::string TreReader::ReadFileVersion(ifstream& file_stream) const
+void TreReader::ReadHeader()
 {
-    std::string version;
+    input_stream_.read(reinterpret_cast<char*>(&header_), sizeof(header_));
 
-    file_stream.width(4);
-    file_stream >> version;
-
-    return version;
+    ValidateFileType(string(header_.file_type, 4));
+    ValidateFileVersion(string(header_.file_version, 4));        
 }
-
-vector<TreFileInfo> TreReader::ReadFileBlock(TreHeader header, ifstream& file_stream) const
-{
-    vector<char> data = header.file_info.ReadDataBlock(&file_stream);
-
-    vector<TreFileInfo> files;
-
-    for (uint32_t i = 0, offset = 0; i < header.record_count; ++i)
-    {
-        TreFileInfo file_info;
         
-        memcpy( &file_info.checksum, &data[0]+offset, sizeof(file_info.checksum));
-        offset += sizeof(file_info.checksum );
-
-        memcpy( &file_info.file_data.size, &data[0]+offset, sizeof(file_info.file_data.size));
-        offset += sizeof(file_info.file_data.size );
-
-        memcpy( &file_info.file_data.offset, &data[0]+offset, sizeof(file_info.file_data.offset));
-        offset += sizeof(file_info.file_data.offset );
-
-        memcpy( &file_info.file_data.compression, &data[0]+offset, sizeof(file_info.file_data.compression));
-        offset += sizeof(file_info.file_data.compression );
-
-        memcpy( &file_info.file_data.compressed_size, &data[0]+offset, sizeof(file_info.file_data.compressed_size));
-        offset += sizeof(file_info.file_data.compressed_size );
-
-        memcpy( &file_info.name_offset, &data[0]+offset, sizeof(file_info.name_offset));
-        offset += sizeof(file_info.name_offset );
-
-        files.push_back(move(file_info));
-    }
+vector<TreFileInfo> TreReader::ReadFileBlock()
+{
+    uint32_t uncompressed_size = header_.file_count * sizeof(TreFileInfo);
+    
+    vector<TreFileInfo> files(header_.file_count);
+        
+    ReadDataBlock(header_.info_offset,
+        header_.info_compression,
+        header_.info_compressed_size,
+        uncompressed_size,
+        reinterpret_cast<char*>(&files[0]));
 
     return files;
 }
-
-void TreReader::ReadFileNames(TreHeader header, vector<TreFileInfo>& files, ifstream& file_stream) const
+        
+vector<char> TreReader::ReadNameBlock()
 {
-    vector<char> data = header.file_name.ReadDataBlock(&file_stream);
-
-    for_each(
-        begin(files),
-        end(files),
-        [&data] (TreFileInfo& file_info)
-    {
-        uint32_t offset = file_info.name_offset;
-        file_info.filename = string(&data[file_info.name_offset]);
-    });
-}
-
-void TreReader::ReadMd5Sums(TreHeader header, vector<TreFileInfo>& files, ifstream& file_stream) const
-{
-    file_stream.seekg(header.file_name.offset + header.file_name.compressed_size, ios_base::beg);
+    vector<char> data(header_.name_uncompressed_size); 
     
-    for_each(
-        begin(files),
-        end(files),
-        [&file_stream] (TreFileInfo& file_info)
-    {
-        vector<char> sum(16);
-        file_stream.read(&sum[0], 16);
+    uint32_t name_offset = header_.info_offset + header_.info_compressed_size;
 
-        file_info.md5sum = string(begin(sum), end(sum));
-    });
+    ReadDataBlock(
+        name_offset, 
+        header_.name_compression, 
+        header_.name_compressed_size, 
+        header_.name_uncompressed_size, 
+        &data[0]);
+
+    return data;
+}
+        
+vector<TreReader::Md5Sum> TreReader::ReadMd5SumBlock()
+{    
+    uint32_t offset = header_.info_offset
+        + header_.info_compressed_size
+        + header_.name_compressed_size;
+    uint32_t size = header_.file_count * 16; // where 16 is the length of a md5 sum
+        
+    vector<Md5Sum> data(size);
+    
+    input_stream_.seekg(offset, ios_base::beg);
+    input_stream_.read(reinterpret_cast<char*>(&data[0]), size);
+
+    return data;
 }
 
 void TreReader::ValidateFileType(string file_type) const
@@ -183,5 +119,40 @@ void TreReader::ValidateFileVersion(string file_version) const
     if (file_version.compare("5000") != 0)
     {
         throw runtime_error("Invalid tre file version");
+    }
+}
+
+void TreReader::ReadDataBlock(
+    uint32_t offset,
+    uint32_t compression,
+    uint32_t compressed_size, 
+    uint32_t uncompressed_size, 
+    char* buffer)
+{
+    input_stream_.seekg(offset, ios_base::beg);
+    
+    if (compression == 0)
+    {
+        input_stream_.read(buffer, uncompressed_size);
+    }
+    else if (compression == 2)
+    {
+        vector<char> compressed_data(compressed_size);
+        input_stream_.read(&compressed_data[0], compressed_size);
+
+        int result = uncompress(
+            reinterpret_cast<Bytef*>(buffer),
+            reinterpret_cast<uLongf*>(&uncompressed_size),
+            reinterpret_cast<Bytef*>(&compressed_data[0]),
+            compressed_size);
+
+        if (result != Z_OK)
+        {
+            throw std::runtime_error("ZLib error: " + result);
+        }
+    }
+    else
+    {
+        throw std::runtime_error("Unknown format");
     }
 }
