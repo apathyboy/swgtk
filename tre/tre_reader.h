@@ -16,14 +16,19 @@ namespace tre {
     {
     public:
         TreReader(std::string filename);
-
-        TreContentsMap ReadIndex();
+        
+        bool ContainsFile(const std::string& filename);
 
         const std::string& GetFilename() const;
         const TreHeader& GetHeader() const;
 
+        std::vector<char> GetFileData(const TreFileInfo& file_info);
+        TreFileInfo GetFileInfo(const std::string& filename);
+        std::string GetMd5Hash(const TreFileInfo& file_info);
+        
     private:
         void ReadHeader();
+        void ReadIndex();
                 
         std::vector<TreFileInfo> ReadFileBlock();
         std::vector<char> ReadNameBlock();
@@ -44,6 +49,10 @@ namespace tre {
         std::ifstream input_stream_;
         std::string filename_;
         TreHeader header_;
+
+        std::vector<TreFileInfo> file_block_;
+        std::vector<std::string> name_block_;
+        std::vector<Md5Sum> md5sum_block_;
     };
 
 }  // namespace tre

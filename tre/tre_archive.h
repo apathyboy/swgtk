@@ -11,6 +11,9 @@
 #include <tre/tre.h>
 #include <tre/tre_reader.h>
 
+#include <concurrent_vector.h>
+#include <concurrent_unordered_map.h>
+
 namespace tre
 {
     class TreFileInterface;
@@ -18,15 +21,17 @@ namespace tre
     class TreResourceHandle
     {
     public:
-        explicit TreResourceHandle(const TreResourceFile& tre_info);
+        explicit TreResourceHandle(const std::string& filename, TreReader* tre_reader);
 
         const std::vector<char>& GetBuffer() const;
-        const std::string& GetFilename() const;
+        std::string GetFilename() const;
         uint32_t GetFileSize() const;
-        const std::string& GetMd5Hash() const;
+        std::string GetMd5Hash() const;
 
     private:
-        const TreResourceFile& file_info_;
+        std::string filename_;
+        TreFileInfo file_info_;
+        TreReader* tre_reader_;
         std::vector<char> buffer_;
     };
 
@@ -45,8 +50,18 @@ namespace tre
         std::vector<std::string> ListAvailableResources() const;
 
     public:
-        TreContentsMap tre_index_;
-        std::unordered_map<std::string, std::shared_ptr<TreResourceHandle>> resource_handles_;
+        typedef std::unordered_map<
+            std::string, // File name
+            TreReader* // File reader  
+        > TreIndex;        
+        TreIndex tre_index_;
+
+        typedef std::unordered_map<
+            std::string, 
+            std::shared_ptr<TreResourceHandle>
+        > ResourceHandleMap;
+        ResourceHandleMap resource_handles_;
+
         std::vector<std::unique_ptr<TreReader>> tre_list_;
     };
 }

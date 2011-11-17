@@ -4,8 +4,11 @@
 #include <algorithm>
 #include <zlib.h>
 
+#include <ppl.h>
+
 using namespace std;
 using namespace tre;
+using namespace Concurrency;
 
 TreReader::TreReader(std::string filename)
 : filename_(filename)
@@ -14,32 +17,31 @@ TreReader::TreReader(std::string filename)
     input_stream_.open(filename_.c_str(), ios_base::binary);
 
     ReadHeader();
+    ReadIndex();
 }
 
-TreContentsMap TreReader::ReadIndex()
-{    
-    vector<TreFileInfo> file_block = ReadFileBlock();
-    vector<char> name_block = ReadNameBlock();
-    vector<Md5Sum> md5_sum_block = ReadMd5SumBlock();
+void TreReader::ReadIndex()
+{
+    vector<char> name_block;
 
-    TreContentsMap index;
-
-    transform(
-        begin(file_block),
-        end(file_block),
-        begin(md5_sum_block),
-        inserter(index, index.begin()),
-        [&name_block] (TreFileInfo& file_info, Md5Sum& md5_sum) -> TreContentsMap::value_type
+    //parallel_invoke(
+    //    [this] {
+            file_block_ = ReadFileBlock();
+    //    },
+    //    [this, &name_block] {
+            name_block = ReadNameBlock();
+    //    },
+    //    [this] {
+            md5sum_block_ = ReadMd5SumBlock();
+    //    });
+        
+    for_each(
+        begin(file_block_),
+        end(file_block_),
+        [this, &name_block] (const TreFileInfo& info)
     {
-        TreResourceFile resource_file;
-        resource_file.filename = string(&name_block[file_info.name_offset]);
-        resource_file.md5sum = string(begin(md5_sum), end(md5_sum));
-        resource_file.info = move(file_info);
-
-        return make_pair(resource_file.filename, move(resource_file));
+        name_block_.push_back(&name_block[info.name_offset]);
     });
-
-    return index;
 }
 
 const TreHeader& TreReader::GetHeader() const
@@ -50,6 +52,70 @@ const TreHeader& TreReader::GetHeader() const
 const string& TreReader::GetFilename() const
 {
     return filename_;
+}
+
+vector<char> TreReader::GetFileData(const TreFileInfo& file_info)
+{
+    vector<char> data(file_info.data_size); 
+    
+    ReadDataBlock(
+        file_info.data_offset, 
+        file_info.data_compression, 
+        file_info.data_compressed_size, 
+        file_info.data_size, 
+        &data[0]);
+
+    return data;
+}
+
+bool TreReader::ContainsFile(const string& filename)
+{
+    auto find_iter = find_if(
+        begin(name_block_),
+        end(name_block_),
+        [&filename] (const string& name)
+    {
+        return name.compare(filename) == 0;
+    });
+
+    return find_iter != end(name_block_);
+}
+
+TreFileInfo TreReader::GetFileInfo(const string& filename)
+{
+    auto find_iter = find_if(
+        begin(name_block_),
+        end(name_block_),
+        [&filename] (const string& name)
+    {
+        return name.compare(filename) == 0;
+    });
+
+    if (find_iter == end(name_block_))
+    {
+        throw std::runtime_error("Requested info for invalid file: " + filename);
+    }
+
+    return file_block_[find_iter - begin(name_block_)];
+}
+
+string TreReader::GetMd5Hash(const TreFileInfo& file_info)
+{
+    auto find_iter = find_if(
+        begin(file_block_),
+        end(file_block_),
+        [&file_info] (const TreFileInfo& info)
+    {
+        return info.data_offset == file_info.data_offset;
+    });
+
+    if (find_iter == file_block_.end())
+    {
+        throw std::runtime_error("File information invalid");
+    }
+        
+    return string(begin(md5sum_block_[find_iter - begin(file_block_)]), 
+        end(md5sum_block_[find_iter - begin(file_block_)]));
 }
 
 void TreReader::ReadHeader()
