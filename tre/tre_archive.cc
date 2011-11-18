@@ -78,7 +78,7 @@ const vector<string>& TreArchive::GetTreFilenames() const
     return tre_filenames_;
 }
 
-vector<string> TreArchive::GetAvailableFiles() const
+vector<string> TreArchive::GetAvailableFilenames() const
 {
     vector<string> resource_list;
     for_each(

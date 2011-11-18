@@ -17,10 +17,15 @@ namespace tre {
         bool ContainsFile(const std::string& filename) const;
         
         uint32_t GetFileCount() const;
-        const std::string& GetFilename() const;
+
         std::vector<std::string> GetFilenames() const;
+
+        const std::string& GetFilename() const;
+
         uint32_t GetFileSize(const std::string& filename) const;
+
         std::vector<char> GetFileData(const std::string& filename);
+
         std::string GetMd5Hash(const std::string& filename) const;
     
     private:

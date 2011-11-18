@@ -43,19 +43,19 @@ using namespace Concurrency;
 class TreFile::TreFileImpl
 {
 public:
-        TreFileImpl(std::string filename);
-        
-        bool ContainsFile(const std::string& filename) const;
-        
-        uint32_t GetFileCount() const;
+    TreFileImpl(std::string filename);
+    
+    bool ContainsFile(const std::string& filename) const;
+    
+    uint32_t GetFileCount() const;
 
-        const std::string& GetFilename() const;
-        std::vector<std::string> GetFilenames() const;
+    const std::string& GetFilename() const;
+    std::vector<std::string> GetFilenames() const;
 
-        std::vector<char> GetFileData(const TreFileInfo& file_info);
-        std::vector<char> GetFileData(const std::string& filename);
-        std::string GetMd5Hash(const std::string& filename) const;
-        uint32_t GetFileSize(const std::string& filename) const;
+    std::vector<char> GetFileData(const TreFileInfo& file_info);
+    std::vector<char> GetFileData(const std::string& filename);
+    std::string GetMd5Hash(const std::string& filename) const;
+    uint32_t GetFileSize(const std::string& filename) const;
 
     const TreFileInfo& GetFileInfo(const std::string& filename) const;
 
@@ -74,22 +74,22 @@ public:
     void ValidateFileVersion(std::string file_version) const;
 
     void ReadDataBlock(
-        uint32_t offset,
-        uint32_t compression,
-        uint32_t compressed_size, 
-        uint32_t uncompressed_size, 
-        char* buffer);
+    uint32_t offset,
+    uint32_t compression,
+    uint32_t compressed_size, 
+    uint32_t uncompressed_size, 
+    char* buffer);
 
 private:
-        std::ifstream input_stream_;
-        std::string filename_;
-        TreHeader header_;
+    std::ifstream input_stream_;
+    std::string filename_;
+    TreHeader header_;
 
-        std::mutex mutex_;
+    std::mutex mutex_;
 
-        std::vector<TreFileInfo> file_block_;
-        std::vector<char> name_block_;
-        std::vector<Md5Sum> md5sum_block_;
+    std::vector<TreFileInfo> file_block_;
+    std::vector<char> name_block_;
+    std::vector<Md5Sum> md5sum_block_;
 };
 
 TreFile::TreFile(std::string filename)

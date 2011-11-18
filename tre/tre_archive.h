@@ -25,7 +25,7 @@ namespace tre
 
         const std::vector<std::string>& GetTreFilenames() const;
 
-        std::vector<std::string> GetAvailableFiles() const;
+        std::vector<std::string> GetAvailableFilenames() const;
 
     public:
         TreArchive();
