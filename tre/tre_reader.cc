@@ -4,7 +4,9 @@
 #include <array>
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 #include <mutex>
+#include <sstream>
 #include <zlib.h>
 
 #include <ppl.h>
@@ -21,7 +23,7 @@ class TreReader::TreReaderImpl
 public:
         TreReaderImpl(std::string filename);
         
-        bool ContainsFile(const std::string& filename);
+        bool ContainsFile(const std::string& filename) const;
         
         uint32_t GetFileCount() const;
 
@@ -29,10 +31,10 @@ public:
 
         std::vector<char> GetFileData(const TreFileInfo& file_info);
         std::vector<char> GetFileData(const std::string& filename);
-        std::string GetMd5Hash(const std::string& filename);
-        uint32_t GetFilesize(const std::string& filename);
+        std::string GetMd5Hash(const std::string& filename) const;
+        uint32_t GetFileSize(const std::string& filename) const;
 
-    const TreFileInfo& GetFileInfo(const std::string& filename);
+    const TreFileInfo& GetFileInfo(const std::string& filename) const;
 
     void ReadHeader();
     void ReadIndex();
@@ -86,19 +88,19 @@ vector<char> TreReader::GetFileData(const string& filename)
     return impl_->GetFileData(filename);
 }
 
-bool TreReader::ContainsFile(const string& filename)
+bool TreReader::ContainsFile(const string& filename) const
 {
     return impl_->ContainsFile(filename);
 }
 
-string TreReader::GetMd5Hash(const string& filename)
+string TreReader::GetMd5Hash(const string& filename) const
 {
     return impl_->GetMd5Hash(filename);
 }
 
-uint32_t TreReader::GetFilesize(const string& filename)
+uint32_t TreReader::GetFileSize(const string& filename) const
 {
-    return impl_->GetFilesize(filename);
+    return impl_->GetFileSize(filename);
 }
 
 TreReader::TreReaderImpl::TreReaderImpl(std::string filename)
@@ -141,7 +143,7 @@ vector<char> TreReader::TreReaderImpl::GetFileData(const TreFileInfo& file_info)
     return data;
 }
 
-bool TreReader::TreReaderImpl::ContainsFile(const string& filename)
+bool TreReader::TreReaderImpl::ContainsFile(const string& filename) const
 {
     auto find_iter = find_if(
         begin(file_block_),
@@ -154,7 +156,7 @@ bool TreReader::TreReaderImpl::ContainsFile(const string& filename)
     return find_iter != end(file_block_);
 }
 
-string TreReader::TreReaderImpl::GetMd5Hash(const string& filename)
+string TreReader::TreReaderImpl::GetMd5Hash(const string& filename) const
 {
     auto find_iter = find_if(
         begin(file_block_),
@@ -168,12 +170,25 @@ string TreReader::TreReaderImpl::GetMd5Hash(const string& filename)
     {
         throw std::runtime_error("File name invalid");
     }
-         
-    return string(begin(md5sum_block_[find_iter - begin(file_block_)]), 
-        end(md5sum_block_[find_iter - begin(file_block_)]));
+
+    stringstream ss;
+
+    ss.flags(ss.hex);
+    ss.fill('0');
+    ss.width(2);
+    
+    for_each(
+        begin(md5sum_block_[find_iter - begin(file_block_)]), 
+        begin(md5sum_block_[find_iter - begin(file_block_)]) + sizeof(Md5Sum),
+        [&ss] (unsigned char c) 
+    {
+        ss << static_cast<unsigned>(c);
+    });
+
+    return ss.str();
 }
 
-uint32_t TreReader::TreReaderImpl::GetFilesize(const string& filename)
+uint32_t TreReader::TreReaderImpl::GetFileSize(const string& filename) const
 {
     auto find_iter = find_if(
         begin(file_block_),
@@ -196,7 +211,7 @@ const TreHeader& TreReader::TreReaderImpl::GetHeader() const
     return header_;
 }
 
-const TreFileInfo& TreReader::TreReaderImpl::GetFileInfo(const string& filename)
+const TreFileInfo& TreReader::TreReaderImpl::GetFileInfo(const string& filename) const
 {
     auto find_iter = find_if(
         begin(file_block_),

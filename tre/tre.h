@@ -31,13 +31,6 @@ namespace tre {
         uint32_t data_compressed_size;
         uint32_t name_offset;
     };
-
-    struct TreResourceFile
-    {
-        std::string filename;
-        std::string md5sum;
-        TreFileInfo info;
-    };
 #pragma pack()
 
 }  // namespace tre
