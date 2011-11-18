@@ -5,14 +5,13 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <vector>
+#include <unordered_map>
+
+#include <concurrent_unordered_map.h>
 
 #include <tre/tre.h>
 #include <tre/tre_reader.h>
-
-#include <concurrent_vector.h>
-#include <concurrent_unordered_map.h>
 
 namespace tre
 {
@@ -45,24 +44,24 @@ namespace tre
 
         std::shared_ptr<TreResourceHandle> GetResourceHandle(const std::string& resource_name);
 
-        std::vector<std::string> GetTreList() const;
+        const std::vector<std::string>& GetTreFilenames() const;
 
         std::vector<std::string> ListAvailableResources() const;
 
     public:
-        typedef std::unordered_map<
-            std::string, // File name
-            TreReader* // File reader  
-        > TreIndex;        
-        TreIndex tre_index_;
-
-        typedef std::unordered_map<
+        typedef Concurrency::concurrent_unordered_map<
             std::string, 
             std::shared_ptr<TreResourceHandle>
         > ResourceHandleMap;
         ResourceHandleMap resource_handles_;
 
-        std::vector<std::unique_ptr<TreReader>> tre_list_;
+        typedef std::unordered_map<
+            std::string, 
+            std::unique_ptr<TreReader>
+        > TreReaderMap;
+        TreReaderMap tre_list_;
+
+        std::vector<std::string> tre_filenames_;
     };
 }
 

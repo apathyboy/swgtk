@@ -22,26 +22,11 @@ TreReader::TreReader(std::string filename)
 
 void TreReader::ReadIndex()
 {
-    vector<char> name_block;
-
-    //parallel_invoke(
-    //    [this] {
-            file_block_ = ReadFileBlock();
-    //    },
-    //    [this, &name_block] {
-            name_block = ReadNameBlock();
-    //    },
-    //    [this] {
-            md5sum_block_ = ReadMd5SumBlock();
-    //    });
-        
-    for_each(
-        begin(file_block_),
-        end(file_block_),
-        [this, &name_block] (const TreFileInfo& info)
-    {
-        name_block_.push_back(&name_block[info.name_offset]);
-    });
+    parallel_invoke(
+        [this] { file_block_ = ReadFileBlock(); },
+        [this] { name_block_ = ReadNameBlock(); },
+        [this] { md5sum_block_ = ReadMd5SumBlock(); }
+    );
 }
 
 const TreHeader& TreReader::GetHeader() const
@@ -52,6 +37,12 @@ const TreHeader& TreReader::GetHeader() const
 const string& TreReader::GetFilename() const
 {
     return filename_;
+}
+
+vector<char> TreReader::GetFileData(const string& filename)
+{
+    auto file_info = GetFileInfo(filename);
+    return GetFileData(file_info);
 }
 
 vector<char> TreReader::GetFileData(const TreFileInfo& file_info)
@@ -71,56 +62,59 @@ vector<char> TreReader::GetFileData(const TreFileInfo& file_info)
 bool TreReader::ContainsFile(const string& filename)
 {
     auto find_iter = find_if(
-        begin(name_block_),
-        end(name_block_),
-        [&filename] (const string& name)
+        begin(file_block_),
+        end(file_block_),
+        [this, &filename] (const TreFileInfo& info)
     {
-        return name.compare(filename) == 0;
+        return filename.compare(&name_block_[info.name_offset]) == 0;
     });
 
-    return find_iter != end(name_block_);
+    return find_iter != end(file_block_);
 }
 
-TreFileInfo TreReader::GetFileInfo(const string& filename)
-{
-    auto find_iter = find_if(
-        begin(name_block_),
-        end(name_block_),
-        [&filename] (const string& name)
-    {
-        return name.compare(filename) == 0;
-    });
-
-    if (find_iter == end(name_block_))
-    {
-        throw std::runtime_error("Requested info for invalid file: " + filename);
-    }
-
-    return file_block_[find_iter - begin(name_block_)];
-}
-
-string TreReader::GetMd5Hash(const TreFileInfo& file_info)
+const TreFileInfo& TreReader::GetFileInfo(const string& filename)
 {
     auto find_iter = find_if(
         begin(file_block_),
         end(file_block_),
-        [&file_info] (const TreFileInfo& info)
+        [this, &filename] (const TreFileInfo& info)
     {
-        return info.data_offset == file_info.data_offset;
+        return filename.compare(&name_block_[info.name_offset]) == 0;
+    });
+    
+    if (find_iter == end(file_block_))
+    {
+        throw std::runtime_error("Requested info for invalid file: " + filename);
+    }
+
+    return *find_iter;
+}
+
+string TreReader::GetMd5Hash(const string& filename)
+{
+    auto find_iter = find_if(
+        begin(file_block_),
+        end(file_block_),
+        [this, &filename] (const TreFileInfo& info)
+    {
+        return filename.compare(&name_block_[info.name_offset]) == 0;
     });
 
     if (find_iter == file_block_.end())
     {
         throw std::runtime_error("File information invalid");
     }
-        
+         
     return string(begin(md5sum_block_[find_iter - begin(file_block_)]), 
         end(md5sum_block_[find_iter - begin(file_block_)]));
 }
 
 void TreReader::ReadHeader()
 {
-    input_stream_.read(reinterpret_cast<char*>(&header_), sizeof(header_));
+    {
+        std::lock_guard<std::mutex> lg(mutex_);
+        input_stream_.read(reinterpret_cast<char*>(&header_), sizeof(header_));
+    }
 
     ValidateFileType(string(header_.file_type, 4));
     ValidateFileVersion(string(header_.file_version, 4));        
@@ -166,8 +160,11 @@ vector<TreReader::Md5Sum> TreReader::ReadMd5SumBlock()
         
     vector<Md5Sum> data(size);
     
-    input_stream_.seekg(offset, ios_base::beg);
-    input_stream_.read(reinterpret_cast<char*>(&data[0]), size);
+    {
+        std::lock_guard<std::mutex> lg(mutex_);
+        input_stream_.seekg(offset, ios_base::beg);
+        input_stream_.read(reinterpret_cast<char*>(&data[0]), size);
+    }
 
     return data;
 }
@@ -194,17 +191,24 @@ void TreReader::ReadDataBlock(
     uint32_t compressed_size, 
     uint32_t uncompressed_size, 
     char* buffer)
-{
-    input_stream_.seekg(offset, ios_base::beg);
-    
+{    
     if (compression == 0)
     {
-        input_stream_.read(buffer, uncompressed_size);
+        {
+            std::lock_guard<std::mutex> lg(mutex_);
+            input_stream_.seekg(offset, ios_base::beg);
+            input_stream_.read(buffer, uncompressed_size);
+        }
     }
     else if (compression == 2)
     {
         vector<char> compressed_data(compressed_size);
-        input_stream_.read(&compressed_data[0], compressed_size);
+        
+        {
+            std::lock_guard<std::mutex> lg(mutex_);
+            input_stream_.seekg(offset, ios_base::beg);
+            input_stream_.read(&compressed_data[0], compressed_size);
+        }
 
         int result = uncompress(
             reinterpret_cast<Bytef*>(buffer),

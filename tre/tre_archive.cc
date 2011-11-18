@@ -11,6 +11,7 @@
 
 using namespace std;
 using namespace tre;
+using namespace Concurrency;
 
 TreResourceHandle::TreResourceHandle(const string& filename, TreReader* tre_reader)
     : filename_(filename)
@@ -37,7 +38,7 @@ uint32_t TreResourceHandle::GetFileSize() const
 
 string TreResourceHandle::GetMd5Hash() const
 {
-    string hash = tre_reader_->GetMd5Hash(file_info_);
+    string hash = tre_reader_->GetMd5Hash(filename_);
     stringstream ss;
 
     ss.flags(ss.hex);
@@ -68,22 +69,22 @@ TreArchive::TreArchive(const string& archive_config)
 void TreArchive::BuildIndex(vector<string> index_files)
 {
     for_each(
-        index_files.rbegin(),
-        index_files.rend(),
-        [this] (const std::string& filename)
+        begin(index_files),
+        end(index_files),
+        [this] (const string& filename)
     {
-        unique_ptr<TreReader> reader(new TreReader(filename));
-
-        //for_each(
-        //    begin(file_index),
-        //    end(file_index),
-        //    [this, &reader] (std::string& filename)
-        //{
-        //    tre_index_.insert(make_pair(move(filename), reader.get()));
-        //});
-        
-        tre_list_.push_back(move(reader));
+        tre_list_.insert(make_pair(filename, nullptr));
     });
+
+    parallel_for_each(
+        index_files.begin(),
+        index_files.end(),
+        [this] (const string& filename)
+    {
+        tre_list_.at(filename) = unique_ptr<TreReader>(new TreReader(filename));
+    });
+
+    tre_filenames_ = move(index_files);
 }
 
 shared_ptr<TreResourceHandle> TreArchive::GetResourceHandle(const string& resource_name)
@@ -97,9 +98,9 @@ shared_ptr<TreResourceHandle> TreArchive::GetResourceHandle(const string& resour
     auto end = tre_list_.end();
     for (auto iter = tre_list_.begin(); iter != end; ++iter)
     {
-        if ((*iter)->ContainsFile(resource_name))
+        if ((*iter).second->ContainsFile(resource_name))
         {
-            auto resource_handle = make_shared<TreResourceHandle>(resource_name, (*iter).get());
+            auto resource_handle = make_shared<TreResourceHandle>(resource_name, (*iter).second.get());
 
             resource_handles_.insert(make_pair(resource_name, resource_handle));
 
@@ -110,31 +111,20 @@ shared_ptr<TreResourceHandle> TreArchive::GetResourceHandle(const string& resour
     throw std::runtime_error("Requested unknown resource " + resource_name);
 }
 
-vector<string> TreArchive::GetTreList() const
+const vector<string>& TreArchive::GetTreFilenames() const
 {
-    vector<string> tre_list;
-
-    for_each(
-        begin(tre_list_),
-        end(tre_list_),
-        [&tre_list] (const std::unique_ptr<TreReader>& reader)
-    {
-        tre_list.push_back(reader->GetFilename());
-    });
-
-    return tre_list;
+    return tre_filenames_;
 }
 
 vector<string> TreArchive::ListAvailableResources() const
 {
     vector<string> resource_list;
-
     for_each(
-        begin(tre_index_),
-        end(tre_index_),
-        [&resource_list] (const TreIndex::value_type& item)
+        begin(tre_list_),
+        end(tre_list_),
+        [&resource_list] (const TreReaderMap::value_type& tre_item)
     {
-        resource_list.push_back(item.first);
+        //tre_item.second->GetFi;
     });
 
     return resource_list;

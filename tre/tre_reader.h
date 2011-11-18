@@ -8,6 +8,9 @@
 #include <unordered_map>
 #include <vector>
 
+#include <mutex>
+#include <concurrent_vector.h>
+
 #include "tre.h"
 
 namespace tre {
@@ -23,8 +26,9 @@ namespace tre {
         const TreHeader& GetHeader() const;
 
         std::vector<char> GetFileData(const TreFileInfo& file_info);
-        TreFileInfo GetFileInfo(const std::string& filename);
-        std::string GetMd5Hash(const TreFileInfo& file_info);
+        std::vector<char> GetFileData(const std::string& filename);
+        const TreFileInfo& GetFileInfo(const std::string& filename);
+        std::string GetMd5Hash(const std::string& filename);
         
     private:
         void ReadHeader();
@@ -50,8 +54,10 @@ namespace tre {
         std::string filename_;
         TreHeader header_;
 
+        std::mutex mutex_;
+
         std::vector<TreFileInfo> file_block_;
-        std::vector<std::string> name_block_;
+        std::vector<char> name_block_;
         std::vector<Md5Sum> md5sum_block_;
     };
 

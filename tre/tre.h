@@ -40,8 +40,6 @@ namespace tre {
     };
 #pragma pack()
 
-    typedef std::unordered_map<std::string, TreResourceFile> TreContentsMap;
-
 }  // namespace tre
 
 #endif  // TRE_H_
