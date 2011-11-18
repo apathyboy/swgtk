@@ -4,6 +4,8 @@
 #include <algorithm>
 #include <ppl.h>
 
+#include <tre/tre_file.h>
+
 using namespace std;
 using namespace tre;
 using namespace Concurrency;
@@ -23,7 +25,7 @@ TreArchive::TreArchive(vector<string> index_files)
         index_files.end(),
         [this] (const string& filename)
     {
-        tre_list_.at(filename) = unique_ptr<TreReader>(new TreReader(filename));
+        tre_list_.at(filename) = make_shared<TreFile>(filename);
     });
 
     tre_filenames_ = move(index_files);
@@ -82,11 +84,10 @@ vector<string> TreArchive::GetAvailableFiles() const
     for_each(
         begin(tre_list_),
         end(tre_list_),
-        [&resource_list] (const TreReaderMap::value_type& tre_item)
+        [&resource_list] (const TreFileMap::value_type& tre_item)
     {
-       // auto files = tre_item.second->GetFilenames();
-
-       // resource_list.insert(begin(files), end(files));
+        auto files = tre_item.second->GetFilenames();
+        resource_list.insert(begin(resource_list), begin(files), end(files));
     });
 
     return resource_list;

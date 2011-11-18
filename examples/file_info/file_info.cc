@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
 
     string swg_directory(argv[1]);
 
-    {        
+    {
         vector<string> index_files;
 
         index_files.push_back(swg_directory + "/default_patch.tre");
@@ -78,14 +78,9 @@ int main(int argc, char *argv[])
         index_files.push_back(swg_directory + "/bottom.tre");
 
         TreArchive archive(move(index_files));
-        
-        auto files = archive.GetTreFilenames();
-        
-        cout << "Loading resources from the following files:\n\n";
-        copy(begin(files), end(files), ostream_iterator<string>(cout, "\n")); 
 
         auto data = archive.GetFileData(resource_name);
-        
+
         cout << "\nLoaded resource from archive:\n\n"
              << "   Name: " << resource_name << "\n"
              << "   Filesize: " << data.size() << "\n"

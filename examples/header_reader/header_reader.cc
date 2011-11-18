@@ -2,7 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <tre/tre_reader.h>
+#include <tre/tre_file.h>
 
 using namespace std;
 using namespace tre;
@@ -20,12 +20,12 @@ int main(int argc, char *argv[])
     string swg_directory(argv[1]);
 
     {
-        TreReader reader(swg_directory + "/patch_00.tre");
-        
+        TreFile tre_file(swg_directory + "/patch_00.tre");
+
         cout << "Loaded resource from archive:\n\n"
              << "   Name: " << swg_directory + "/bottom.tre" << "\n"
-             << "   File Count: " << reader.GetFileCount() << "\n" << endl;
-        
+             << "   File Count: " << tre_file.GetFileCount() << "\n" << endl;
+
         cout << "Finished indexing\n" << endl;
     }
 
