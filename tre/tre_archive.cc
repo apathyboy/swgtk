@@ -17,8 +17,7 @@ TreResourceHandle::TreResourceHandle(const string& filename, TreReader* tre_read
     : filename_(filename)
     , tre_reader_(tre_reader)
 {
-    file_info_ = tre_reader_->GetFileInfo(filename);
-    buffer_ = tre_reader_->GetFileData(file_info_);
+    buffer_ = tre_reader_->GetFileData(filename);
 }
 
 const vector<char>& TreResourceHandle::GetBuffer() const
@@ -33,7 +32,7 @@ string TreResourceHandle::GetFilename() const
 
 uint32_t TreResourceHandle::GetFileSize() const
 {
-    return file_info_.data_size;
+    return tre_reader_->GetFilesize(filename_);
 }
 
 string TreResourceHandle::GetMd5Hash() const

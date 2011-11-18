@@ -1,16 +1,107 @@
 
 #include <tre/tre_reader.h>
 
+#include <array>
 #include <algorithm>
+#include <fstream>
+#include <mutex>
 #include <zlib.h>
 
 #include <ppl.h>
+
+#include "tre.h"
 
 using namespace std;
 using namespace tre;
 using namespace Concurrency;
 
+
+class TreReader::TreReaderImpl
+{
+public:
+        TreReaderImpl(std::string filename);
+        
+        bool ContainsFile(const std::string& filename);
+        
+        uint32_t GetFileCount() const;
+
+        const std::string& GetFilename() const;
+
+        std::vector<char> GetFileData(const TreFileInfo& file_info);
+        std::vector<char> GetFileData(const std::string& filename);
+        std::string GetMd5Hash(const std::string& filename);
+        uint32_t GetFilesize(const std::string& filename);
+
+    const TreFileInfo& GetFileInfo(const std::string& filename);
+
+    void ReadHeader();
+    void ReadIndex();
+            
+    std::vector<TreFileInfo> ReadFileBlock();
+    std::vector<char> ReadNameBlock();
+    
+    const TreHeader& GetHeader() const;
+
+    typedef std::array<char, 16> Md5Sum;
+    std::vector<Md5Sum> ReadMd5SumBlock();
+    
+    void ValidateFileType(std::string file_type) const;
+    void ValidateFileVersion(std::string file_version) const;
+
+    void ReadDataBlock(
+        uint32_t offset,
+        uint32_t compression,
+        uint32_t compressed_size, 
+        uint32_t uncompressed_size, 
+        char* buffer);
+
+private:
+        std::ifstream input_stream_;
+        std::string filename_;
+        TreHeader header_;
+
+        std::mutex mutex_;
+
+        std::vector<TreFileInfo> file_block_;
+        std::vector<char> name_block_;
+        std::vector<Md5Sum> md5sum_block_;
+};
+
 TreReader::TreReader(std::string filename)
+: impl_(new TreReaderImpl(filename))
+{}
+
+uint32_t TreReader::GetFileCount() const
+{
+    return impl_->GetFileCount();
+}
+
+const string& TreReader::GetFilename() const
+{
+    return impl_->GetFilename();
+}
+
+vector<char> TreReader::GetFileData(const string& filename)
+{
+    return impl_->GetFileData(filename);
+}
+
+bool TreReader::ContainsFile(const string& filename)
+{
+    return impl_->ContainsFile(filename);
+}
+
+string TreReader::GetMd5Hash(const string& filename)
+{
+    return impl_->GetMd5Hash(filename);
+}
+
+uint32_t TreReader::GetFilesize(const string& filename)
+{
+    return impl_->GetFilesize(filename);
+}
+
+TreReader::TreReaderImpl::TreReaderImpl(std::string filename)
 : filename_(filename)
 {
     input_stream_.exceptions(ifstream::failbit | ifstream::badbit);
@@ -20,32 +111,23 @@ TreReader::TreReader(std::string filename)
     ReadIndex();
 }
 
-void TreReader::ReadIndex()
+uint32_t TreReader::TreReaderImpl::GetFileCount() const
 {
-    parallel_invoke(
-        [this] { file_block_ = ReadFileBlock(); },
-        [this] { name_block_ = ReadNameBlock(); },
-        [this] { md5sum_block_ = ReadMd5SumBlock(); }
-    );
+    return header_.file_count;
 }
 
-const TreHeader& TreReader::GetHeader() const
-{
-    return header_;
-}
-
-const string& TreReader::GetFilename() const
+const string& TreReader::TreReaderImpl::GetFilename() const
 {
     return filename_;
 }
 
-vector<char> TreReader::GetFileData(const string& filename)
+vector<char> TreReader::TreReaderImpl::GetFileData(const string& filename)
 {
     auto file_info = GetFileInfo(filename);
     return GetFileData(file_info);
 }
 
-vector<char> TreReader::GetFileData(const TreFileInfo& file_info)
+vector<char> TreReader::TreReaderImpl::GetFileData(const TreFileInfo& file_info)
 {
     vector<char> data(file_info.data_size); 
     
@@ -59,7 +141,7 @@ vector<char> TreReader::GetFileData(const TreFileInfo& file_info)
     return data;
 }
 
-bool TreReader::ContainsFile(const string& filename)
+bool TreReader::TreReaderImpl::ContainsFile(const string& filename)
 {
     auto find_iter = find_if(
         begin(file_block_),
@@ -72,7 +154,49 @@ bool TreReader::ContainsFile(const string& filename)
     return find_iter != end(file_block_);
 }
 
-const TreFileInfo& TreReader::GetFileInfo(const string& filename)
+string TreReader::TreReaderImpl::GetMd5Hash(const string& filename)
+{
+    auto find_iter = find_if(
+        begin(file_block_),
+        end(file_block_),
+        [this, &filename] (const TreFileInfo& info)
+    {
+        return filename.compare(&name_block_[info.name_offset]) == 0;
+    });
+
+    if (find_iter == file_block_.end())
+    {
+        throw std::runtime_error("File name invalid");
+    }
+         
+    return string(begin(md5sum_block_[find_iter - begin(file_block_)]), 
+        end(md5sum_block_[find_iter - begin(file_block_)]));
+}
+
+uint32_t TreReader::TreReaderImpl::GetFilesize(const string& filename)
+{
+    auto find_iter = find_if(
+        begin(file_block_),
+        end(file_block_),
+        [this, &filename] (const TreFileInfo& info)
+    {
+        return filename.compare(&name_block_[info.name_offset]) == 0;
+    });
+
+    if (find_iter == file_block_.end())
+    {
+        throw std::runtime_error("File name invalid");
+    }
+         
+    return find_iter->data_size;
+}
+
+const TreHeader& TreReader::TreReaderImpl::GetHeader() const
+{
+    return header_;
+}
+
+const TreFileInfo& TreReader::TreReaderImpl::GetFileInfo(const string& filename)
 {
     auto find_iter = find_if(
         begin(file_block_),
@@ -90,26 +214,7 @@ const TreFileInfo& TreReader::GetFileInfo(const string& filename)
     return *find_iter;
 }
 
-string TreReader::GetMd5Hash(const string& filename)
-{
-    auto find_iter = find_if(
-        begin(file_block_),
-        end(file_block_),
-        [this, &filename] (const TreFileInfo& info)
-    {
-        return filename.compare(&name_block_[info.name_offset]) == 0;
-    });
-
-    if (find_iter == file_block_.end())
-    {
-        throw std::runtime_error("File information invalid");
-    }
-         
-    return string(begin(md5sum_block_[find_iter - begin(file_block_)]), 
-        end(md5sum_block_[find_iter - begin(file_block_)]));
-}
-
-void TreReader::ReadHeader()
+void TreReader::TreReaderImpl::ReadHeader()
 {
     {
         std::lock_guard<std::mutex> lg(mutex_);
@@ -119,8 +224,17 @@ void TreReader::ReadHeader()
     ValidateFileType(string(header_.file_type, 4));
     ValidateFileVersion(string(header_.file_version, 4));        
 }
-        
-vector<TreFileInfo> TreReader::ReadFileBlock()
+
+void TreReader::TreReaderImpl::ReadIndex()
+{
+    parallel_invoke(
+        [this] { file_block_ = ReadFileBlock(); },
+        [this] { name_block_ = ReadNameBlock(); },
+        [this] { md5sum_block_ = ReadMd5SumBlock(); }
+    );
+}
+
+vector<TreFileInfo> TreReader::TreReaderImpl::ReadFileBlock()
 {
     uint32_t uncompressed_size = header_.file_count * sizeof(TreFileInfo);
     
@@ -135,7 +249,7 @@ vector<TreFileInfo> TreReader::ReadFileBlock()
     return files;
 }
         
-vector<char> TreReader::ReadNameBlock()
+vector<char> TreReader::TreReaderImpl::ReadNameBlock()
 {
     vector<char> data(header_.name_uncompressed_size); 
     
@@ -151,7 +265,7 @@ vector<char> TreReader::ReadNameBlock()
     return data;
 }
         
-vector<TreReader::Md5Sum> TreReader::ReadMd5SumBlock()
+vector<TreReader::TreReaderImpl::Md5Sum> TreReader::TreReaderImpl::ReadMd5SumBlock()
 {    
     uint32_t offset = header_.info_offset
         + header_.info_compressed_size
@@ -169,7 +283,7 @@ vector<TreReader::Md5Sum> TreReader::ReadMd5SumBlock()
     return data;
 }
 
-void TreReader::ValidateFileType(string file_type) const
+void TreReader::TreReaderImpl::ValidateFileType(string file_type) const
 {
     if (file_type.compare("EERT") != 0)
     {
@@ -177,7 +291,7 @@ void TreReader::ValidateFileType(string file_type) const
     }
 }
 
-void TreReader::ValidateFileVersion(string file_version) const
+void TreReader::TreReaderImpl::ValidateFileVersion(string file_version) const
 {
     if (file_version.compare("5000") != 0)
     {
@@ -185,7 +299,7 @@ void TreReader::ValidateFileVersion(string file_version) const
     }
 }
 
-void TreReader::ReadDataBlock(
+void TreReader::TreReaderImpl::ReadDataBlock(
     uint32_t offset,
     uint32_t compression,
     uint32_t compressed_size, 

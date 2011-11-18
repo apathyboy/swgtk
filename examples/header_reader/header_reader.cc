@@ -21,14 +21,10 @@ int main(int argc, char *argv[])
 
     {
         TreReader reader(swg_directory + "/patch_00.tre");
-
-        TreHeader header = reader.GetHeader();
-
+        
         cout << "Loaded resource from archive:\n\n"
              << "   Name: " << swg_directory + "/bottom.tre" << "\n"
-             << "   File Count: " << header.file_count << "\n"
-             << "   File Info Compressed: " << header.info_compression << "\n"
-             << "   File Names Compressed: " << header.name_compression << "\n" << endl;
+             << "   File Count: " << reader.GetFileCount() << "\n" << endl;
         
         cout << "Finished indexing\n" << endl;
     }
