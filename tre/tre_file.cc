@@ -20,7 +20,7 @@ using namespace Concurrency;
     {
         char file_type[4];
         char file_version[4];
-        uint32_t file_count;
+        uint32_t resource_count;
         uint32_t info_offset;
         uint32_t info_compression;
         uint32_t info_compressed_size;
@@ -141,7 +141,7 @@ TreFile::TreFileImpl::TreFileImpl(std::string filename)
 
 uint32_t TreFile::TreFileImpl::GetResourceCount() const
 {
-    return header_.file_count;
+    return header_.resource_count;
 }
 
 const string& TreFile::TreFileImpl::GetFilename() const
@@ -281,9 +281,9 @@ void TreFile::TreFileImpl::ReadIndex()
 
 vector<TreResourceInfo> TreFile::TreFileImpl::ReadResourceBlock()
 {
-    uint32_t uncompressed_size = header_.file_count * sizeof(TreResourceInfo);
+    uint32_t uncompressed_size = header_.resource_count * sizeof(TreResourceInfo);
     
-    vector<TreResourceInfo> files(header_.file_count);
+    vector<TreResourceInfo> files(header_.resource_count);
         
     ReadDataBlock(header_.info_offset,
         header_.info_compression,
@@ -315,7 +315,7 @@ vector<TreFile::TreFileImpl::Md5Sum> TreFile::TreFileImpl::ReadMd5SumBlock()
     uint32_t offset = header_.info_offset
         + header_.info_compressed_size
         + header_.name_compressed_size;
-    uint32_t size = header_.file_count * 16; // where 16 is the length of a md5 sum
+    uint32_t size = header_.resource_count * 16; // where 16 is the length of a md5 sum
         
     vector<Md5Sum> data(size);
     
