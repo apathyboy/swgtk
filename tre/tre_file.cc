@@ -53,19 +53,17 @@ public:
     std::vector<std::string> GetResourceNames() const;
 
     std::vector<char> GetResource(const TreResourceInfo& resource_info);
-    std::vector<char> GetResource(const std::string& resource_name);
     std::string GetMd5Hash(const std::string& resource_name) const;
     uint32_t GetResourceSize(const std::string& resource_name) const;
 
     const TreResourceInfo& GetResourceInfo(const std::string& resource_name) const;
 
+private:
     void ReadHeader();
     void ReadIndex();
             
     std::vector<TreResourceInfo> ReadResourceBlock();
     std::vector<char> ReadNameBlock();
-    
-    const TreHeader& GetHeader() const;
 
     typedef std::array<char, 16> Md5Sum;
     std::vector<Md5Sum> ReadMd5SumBlock();
@@ -74,13 +72,12 @@ public:
     void ValidateFileVersion(std::string file_version) const;
 
     void ReadDataBlock(
-    uint32_t offset,
-    uint32_t compression,
-    uint32_t compressed_size, 
-    uint32_t uncompressed_size, 
-    char* buffer);
+		uint32_t offset,
+		uint32_t compression,
+		uint32_t compressed_size, 
+		uint32_t uncompressed_size, 
+		char* buffer);
 
-private:
     std::ifstream input_stream_;
     std::string filename_;
     TreHeader header_;
@@ -113,7 +110,8 @@ const string& TreFile::GetFilename() const
 
 vector<char> TreFile::GetResource(const string& resource_name)
 {
-    return impl_->GetResource(resource_name);
+    return impl_->GetResource(
+		impl_->GetResourceInfo(resource_name));
 }
 
 bool TreFile::ContainsResource(const string& resource_name) const
@@ -164,12 +162,6 @@ std::vector<std::string> TreFile::TreFileImpl::GetResourceNames() const
     });
 
     return resource_names;
-}
-
-vector<char> TreFile::TreFileImpl::GetResource(const string& resource_name)
-{
-    auto file_info = GetResourceInfo(resource_name);
-    return GetResource(file_info);
 }
 
 vector<char> TreFile::TreFileImpl::GetResource(const TreResourceInfo& file_info)
@@ -247,11 +239,6 @@ uint32_t TreFile::TreFileImpl::GetResourceSize(const string& resource_name) cons
     }
          
     return find_iter->data_size;
-}
-
-const TreHeader& TreFile::TreFileImpl::GetHeader() const
-{
-    return header_;
 }
 
 const TreResourceInfo& TreFile::TreFileImpl::GetResourceInfo(const string& resource_name) const
