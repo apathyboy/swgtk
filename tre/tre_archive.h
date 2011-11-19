@@ -16,16 +16,16 @@ namespace tre
     {
     public:
         explicit TreArchive(std::vector<std::string> index_files);
-
-        uint32_t GetFilesize(const std::string& filename) const;
-
-        std::vector<char> GetFileData(const std::string& filename);
-
-        std::string GetMd5Hash(const std::string& filename) const;
-
+		
         const std::vector<std::string>& GetTreFilenames() const;
 
-        std::vector<std::string> GetAvailableFilenames() const;
+        uint32_t GetResourceSize(const std::string& resource_name) const;
+
+        std::vector<char> GetResource(const std::string& resource_name);
+
+        std::string GetMd5Hash(const std::string& resource_name) const;
+
+        std::vector<std::string> GetAvailableResources() const;
 
     public:
         TreArchive();

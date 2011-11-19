@@ -31,46 +31,46 @@ TreArchive::TreArchive(vector<string> index_files)
     tre_filenames_ = move(index_files);
 }
 
-uint32_t TreArchive::GetFilesize(const std::string& filename) const
+uint32_t TreArchive::GetResourceSize(const std::string& resource_name) const
 {
     auto end = tre_list_.end();
     for (auto iter = tre_list_.begin(); iter != end; ++iter)
     {
-        if ((*iter).second->ContainsFile(filename))
+        if ((*iter).second->ContainsResource(resource_name))
         {
-            return (*iter).second->GetFileSize(filename);
+            return (*iter).second->GetResourceSize(resource_name);
         }
     }
 
-    throw std::runtime_error("Requested unknown resource " + filename);
+    throw std::runtime_error("Requested unknown resource " + resource_name);
 }
 
-std::vector<char> TreArchive::GetFileData(const std::string& filename)
+std::vector<char> TreArchive::GetResource(const std::string& resource_name)
 {
     auto end = tre_list_.end();
     for (auto iter = tre_list_.begin(); iter != end; ++iter)
     {
-        if ((*iter).second->ContainsFile(filename))
+        if ((*iter).second->ContainsResource(resource_name))
         {
-            return (*iter).second->GetFileData(filename);
+            return (*iter).second->GetResource(resource_name);
         }
     }
 
-    throw std::runtime_error("Requested unknown resource " + filename);
+    throw std::runtime_error("Requested unknown resource " + resource_name);
 }
 
-std::string TreArchive::GetMd5Hash(const std::string& filename) const
+std::string TreArchive::GetMd5Hash(const std::string& resource_name) const
 {
     auto end = tre_list_.end();
     for (auto iter = tre_list_.begin(); iter != end; ++iter)
     {
-        if ((*iter).second->ContainsFile(filename))
+        if ((*iter).second->ContainsResource(resource_name))
         {
-            return (*iter).second->GetMd5Hash(filename);
+            return (*iter).second->GetMd5Hash(resource_name);
         }
     }
 
-    throw std::runtime_error("Requested unknown resource " + filename);
+    throw std::runtime_error("Requested unknown resource " + resource_name);
 }
 
 const vector<string>& TreArchive::GetTreFilenames() const
@@ -78,16 +78,17 @@ const vector<string>& TreArchive::GetTreFilenames() const
     return tre_filenames_;
 }
 
-vector<string> TreArchive::GetAvailableFilenames() const
+vector<string> TreArchive::GetAvailableResources() const
 {
     vector<string> resource_list;
+
     for_each(
         begin(tre_list_),
         end(tre_list_),
         [&resource_list] (const TreFileMap::value_type& tre_item)
     {
-        auto files = tre_item.second->GetFilenames();
-        resource_list.insert(begin(resource_list), begin(files), end(files));
+        auto resources = tre_item.second->GetResourceNames();
+        resource_list.insert(begin(resource_list), begin(resources), end(resources));
     });
 
     return resource_list;

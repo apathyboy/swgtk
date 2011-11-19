@@ -12,21 +12,21 @@ namespace tre {
     class TreFile
     {
     public:
-        TreFile(std::string filename);
+        explicit TreFile(const std::string& filename);
         
-        bool ContainsFile(const std::string& filename) const;
+        bool ContainsResource(const std::string& resource_name) const;
         
-        uint32_t GetFileCount() const;
+        uint32_t GetResourceCount() const;
 
-        std::vector<std::string> GetFilenames() const;
+        std::vector<std::string> GetResourceNames() const;
 
         const std::string& GetFilename() const;
 
-        uint32_t GetFileSize(const std::string& filename) const;
+        uint32_t GetResourceSize(const std::string& resource_name) const;
 
-        std::vector<char> GetFileData(const std::string& filename);
+        std::vector<char> GetResource(const std::string& resource_name);
 
-        std::string GetMd5Hash(const std::string& filename) const;
+        std::string GetMd5Hash(const std::string& resource_name) const;
     
     private:
         class TreFileImpl;

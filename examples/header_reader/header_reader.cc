@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
 
         cout << "Loaded resource from archive:\n\n"
              << "   Name: " << swg_directory + "/bottom.tre" << "\n"
-             << "   File Count: " << tre_file.GetFileCount() << "\n" << endl;
+             << "   File Count: " << tre_file.GetResourceCount() << "\n" << endl;
 
         cout << "Finished indexing\n" << endl;
     }

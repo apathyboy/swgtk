@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
 
         TreArchive archive(move(index_files));
 
-        auto data = archive.GetFileData(resource_name);
+        auto data = archive.GetResource(resource_name);
 
         cout << "\nLoaded resource from archive:\n\n"
              << "   Name: " << resource_name << "\n"

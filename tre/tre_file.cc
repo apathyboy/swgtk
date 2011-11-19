@@ -29,7 +29,7 @@ using namespace Concurrency;
         uint32_t name_uncompressed_size;
     };
     
-    struct TreFileInfo
+    struct TreResourceInfo
     {
         uint32_t checksum;
         uint32_t data_size;
@@ -45,24 +45,24 @@ class TreFile::TreFileImpl
 public:
     TreFileImpl(std::string filename);
     
-    bool ContainsFile(const std::string& filename) const;
+    bool ContainsResource(const std::string& resource_name) const;
     
-    uint32_t GetFileCount() const;
+    uint32_t GetResourceCount() const;
 
     const std::string& GetFilename() const;
-    std::vector<std::string> GetFilenames() const;
+    std::vector<std::string> GetResourceNames() const;
 
-    std::vector<char> GetFileData(const TreFileInfo& file_info);
-    std::vector<char> GetFileData(const std::string& filename);
-    std::string GetMd5Hash(const std::string& filename) const;
-    uint32_t GetFileSize(const std::string& filename) const;
+    std::vector<char> GetResource(const TreResourceInfo& resource_info);
+    std::vector<char> GetResource(const std::string& resource_name);
+    std::string GetMd5Hash(const std::string& resource_name) const;
+    uint32_t GetResourceSize(const std::string& resource_name) const;
 
-    const TreFileInfo& GetFileInfo(const std::string& filename) const;
+    const TreResourceInfo& GetResourceInfo(const std::string& resource_name) const;
 
     void ReadHeader();
     void ReadIndex();
             
-    std::vector<TreFileInfo> ReadFileBlock();
+    std::vector<TreResourceInfo> ReadResourceBlock();
     std::vector<char> ReadNameBlock();
     
     const TreHeader& GetHeader() const;
@@ -87,23 +87,23 @@ private:
 
     std::mutex mutex_;
 
-    std::vector<TreFileInfo> file_block_;
+    std::vector<TreResourceInfo> resource_block_;
     std::vector<char> name_block_;
     std::vector<Md5Sum> md5sum_block_;
 };
 
-TreFile::TreFile(std::string filename)
+TreFile::TreFile(const std::string& filename)
 : impl_(new TreFileImpl(filename))
 {}
 
-uint32_t TreFile::GetFileCount() const
+uint32_t TreFile::GetResourceCount() const
 {
-    return impl_->GetFileCount();
+    return impl_->GetResourceCount();
 }
 
-vector<string> TreFile::GetFilenames() const
+vector<string> TreFile::GetResourceNames() const
 {
-    return impl_->GetFilenames();
+    return impl_->GetResourceNames();
 }
 
 const string& TreFile::GetFilename() const
@@ -111,24 +111,24 @@ const string& TreFile::GetFilename() const
     return impl_->GetFilename();
 }
 
-vector<char> TreFile::GetFileData(const string& filename)
+vector<char> TreFile::GetResource(const string& resource_name)
 {
-    return impl_->GetFileData(filename);
+    return impl_->GetResource(resource_name);
 }
 
-bool TreFile::ContainsFile(const string& filename) const
+bool TreFile::ContainsResource(const string& resource_name) const
 {
-    return impl_->ContainsFile(filename);
+    return impl_->ContainsResource(resource_name);
 }
 
-string TreFile::GetMd5Hash(const string& filename) const
+string TreFile::GetMd5Hash(const string& resource_name) const
 {
-    return impl_->GetMd5Hash(filename);
+    return impl_->GetMd5Hash(resource_name);
 }
 
-uint32_t TreFile::GetFileSize(const string& filename) const
+uint32_t TreFile::GetResourceSize(const string& resource_name) const
 {
-    return impl_->GetFileSize(filename);
+    return impl_->GetResourceSize(resource_name);
 }
 
 TreFile::TreFileImpl::TreFileImpl(std::string filename)
@@ -141,7 +141,7 @@ TreFile::TreFileImpl::TreFileImpl(std::string filename)
     ReadIndex();
 }
 
-uint32_t TreFile::TreFileImpl::GetFileCount() const
+uint32_t TreFile::TreFileImpl::GetResourceCount() const
 {
     return header_.file_count;
 }
@@ -151,28 +151,28 @@ const string& TreFile::TreFileImpl::GetFilename() const
     return filename_;
 }
 
-std::vector<std::string> TreFile::TreFileImpl::GetFilenames() const
+std::vector<std::string> TreFile::TreFileImpl::GetResourceNames() const
 {
-    std::vector<std::string> filenames;
+    std::vector<std::string> resource_names;
 
     for_each(
-        begin(file_block_),
-        end(file_block_),
-        [this, &filenames] (const TreFileInfo& info)
+        begin(resource_block_),
+        end(resource_block_),
+        [this, &resource_names] (const TreResourceInfo& info)
     {
-        filenames.push_back(&name_block_[info.name_offset]);
+        resource_names.push_back(&name_block_[info.name_offset]);
     });
 
-    return filenames;
+    return resource_names;
 }
 
-vector<char> TreFile::TreFileImpl::GetFileData(const string& filename)
+vector<char> TreFile::TreFileImpl::GetResource(const string& resource_name)
 {
-    auto file_info = GetFileInfo(filename);
-    return GetFileData(file_info);
+    auto file_info = GetResourceInfo(resource_name);
+    return GetResource(file_info);
 }
 
-vector<char> TreFile::TreFileImpl::GetFileData(const TreFileInfo& file_info)
+vector<char> TreFile::TreFileImpl::GetResource(const TreResourceInfo& file_info)
 {
     vector<char> data(file_info.data_size); 
     
@@ -186,30 +186,30 @@ vector<char> TreFile::TreFileImpl::GetFileData(const TreFileInfo& file_info)
     return data;
 }
 
-bool TreFile::TreFileImpl::ContainsFile(const string& filename) const
+bool TreFile::TreFileImpl::ContainsResource(const string& resource_name) const
 {
     auto find_iter = find_if(
-        begin(file_block_),
-        end(file_block_),
-        [this, &filename] (const TreFileInfo& info)
+        begin(resource_block_),
+        end(resource_block_),
+        [this, &resource_name] (const TreResourceInfo& info)
     {
-        return filename.compare(&name_block_[info.name_offset]) == 0;
+        return resource_name.compare(&name_block_[info.name_offset]) == 0;
     });
 
-    return find_iter != end(file_block_);
+    return find_iter != end(resource_block_);
 }
 
-string TreFile::TreFileImpl::GetMd5Hash(const string& filename) const
+string TreFile::TreFileImpl::GetMd5Hash(const string& resource_name) const
 {
     auto find_iter = find_if(
-        begin(file_block_),
-        end(file_block_),
-        [this, &filename] (const TreFileInfo& info)
+        begin(resource_block_),
+        end(resource_block_),
+        [this, &resource_name] (const TreResourceInfo& info)
     {
-        return filename.compare(&name_block_[info.name_offset]) == 0;
+        return resource_name.compare(&name_block_[info.name_offset]) == 0;
     });
 
-    if (find_iter == file_block_.end())
+    if (find_iter == resource_block_.end())
     {
         throw std::runtime_error("File name invalid");
     }
@@ -221,8 +221,8 @@ string TreFile::TreFileImpl::GetMd5Hash(const string& filename) const
     ss.width(2);
     
     for_each(
-        begin(md5sum_block_[find_iter - begin(file_block_)]), 
-        begin(md5sum_block_[find_iter - begin(file_block_)]) + sizeof(Md5Sum),
+        begin(md5sum_block_[find_iter - begin(resource_block_)]), 
+        begin(md5sum_block_[find_iter - begin(resource_block_)]) + sizeof(Md5Sum),
         [&ss] (unsigned char c) 
     {
         ss << static_cast<unsigned>(c);
@@ -231,17 +231,17 @@ string TreFile::TreFileImpl::GetMd5Hash(const string& filename) const
     return ss.str();
 }
 
-uint32_t TreFile::TreFileImpl::GetFileSize(const string& filename) const
+uint32_t TreFile::TreFileImpl::GetResourceSize(const string& resource_name) const
 {
     auto find_iter = find_if(
-        begin(file_block_),
-        end(file_block_),
-        [this, &filename] (const TreFileInfo& info)
+        begin(resource_block_),
+        end(resource_block_),
+        [this, &resource_name] (const TreResourceInfo& info)
     {
-        return filename.compare(&name_block_[info.name_offset]) == 0;
+        return resource_name.compare(&name_block_[info.name_offset]) == 0;
     });
 
-    if (find_iter == file_block_.end())
+    if (find_iter == resource_block_.end())
     {
         throw std::runtime_error("File name invalid");
     }
@@ -254,19 +254,19 @@ const TreHeader& TreFile::TreFileImpl::GetHeader() const
     return header_;
 }
 
-const TreFileInfo& TreFile::TreFileImpl::GetFileInfo(const string& filename) const
+const TreResourceInfo& TreFile::TreFileImpl::GetResourceInfo(const string& resource_name) const
 {
     auto find_iter = find_if(
-        begin(file_block_),
-        end(file_block_),
-        [this, &filename] (const TreFileInfo& info)
+        begin(resource_block_),
+        end(resource_block_),
+        [this, &resource_name] (const TreResourceInfo& info)
     {
-        return filename.compare(&name_block_[info.name_offset]) == 0;
+        return resource_name.compare(&name_block_[info.name_offset]) == 0;
     });
     
-    if (find_iter == end(file_block_))
+    if (find_iter == end(resource_block_))
     {
-        throw std::runtime_error("Requested info for invalid file: " + filename);
+        throw std::runtime_error("Requested info for invalid file: " + resource_name);
     }
 
     return *find_iter;
@@ -286,17 +286,17 @@ void TreFile::TreFileImpl::ReadHeader()
 void TreFile::TreFileImpl::ReadIndex()
 {
     parallel_invoke(
-        [this] { file_block_ = ReadFileBlock(); },
+        [this] { resource_block_ = ReadResourceBlock(); },
         [this] { name_block_ = ReadNameBlock(); },
         [this] { md5sum_block_ = ReadMd5SumBlock(); }
     );
 }
 
-vector<TreFileInfo> TreFile::TreFileImpl::ReadFileBlock()
+vector<TreResourceInfo> TreFile::TreFileImpl::ReadResourceBlock()
 {
-    uint32_t uncompressed_size = header_.file_count * sizeof(TreFileInfo);
+    uint32_t uncompressed_size = header_.file_count * sizeof(TreResourceInfo);
     
-    vector<TreFileInfo> files(header_.file_count);
+    vector<TreResourceInfo> files(header_.file_count);
         
     ReadDataBlock(header_.info_offset,
         header_.info_compression,
