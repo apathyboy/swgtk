@@ -3,10 +3,10 @@ file(GLOB_RECURSE SOURCES *.h *.cpp *.cc)
 
 GroupSourcesByFilesystem("${SOURCES}")
 
-add_executable(header_reader
+add_executable(toc_reader
     ${SOURCES}
 )
-target_link_libraries(header_reader
+target_link_libraries(toc_reader
     swgtk
     ${ZLIB_LIBRARIES}
 )

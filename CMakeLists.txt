@@ -25,8 +25,8 @@ if(MSVC)
 endif()
 
 include_directories(
-    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_SOURCE_DIR}/src
 )
 
-add_subdirectory(tre)
+add_subdirectory(src)
 add_subdirectory(examples)

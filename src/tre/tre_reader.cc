@@ -1,5 +1,5 @@
 
-#include <tre/tre_file.h>
+#include "tre/tre_reader.h"
 
 #include <array>
 #include <algorithm>
@@ -11,40 +11,20 @@
 
 #include <ppl.h>
 
+#include "tre/tre_data.h"
+
 using namespace std;
-using namespace tre;
+using namespace swgtk::tre;
 using namespace Concurrency;
 
-#pragma pack(1)
-    struct TreHeader
-    {
-        char file_type[4];
-        char file_version[4];
-        uint32_t resource_count;
-        uint32_t info_offset;
-        uint32_t info_compression;
-        uint32_t info_compressed_size;
-        uint32_t name_compression;
-        uint32_t name_compressed_size;
-        uint32_t name_uncompressed_size;
-    };
-    
-    struct TreResourceInfo
-    {
-        uint32_t checksum;
-        uint32_t data_size;
-        uint32_t data_offset;
-        uint32_t data_compression;
-        uint32_t data_compressed_size;
-        uint32_t name_offset;
-    };
-#pragma pack()
-
-class TreFile::TreFileImpl
+class TreReader::TreReaderImpl
 {
 public:
-    TreFileImpl(std::string filename);
+    TreReaderImpl(std::string filename);
     
+    void Initialize();
+    bool IsInitialized() const;
+
     bool ContainsResource(const std::string& resource_name) const;
     
     uint32_t GetResourceCount() const;
@@ -59,6 +39,8 @@ public:
     const TreResourceInfo& GetResourceInfo(const std::string& resource_name) const;
 
 private:
+    TreReaderImpl();
+
     void ReadHeader();
     void ReadIndex();
             
@@ -78,6 +60,8 @@ private:
 		uint32_t uncompressed_size, 
 		char* buffer);
 
+    bool initialized_;
+
     std::ifstream input_stream_;
     std::string filename_;
     TreHeader header_;
@@ -89,67 +73,109 @@ private:
     std::vector<Md5Sum> md5sum_block_;
 };
 
-TreFile::TreFile(const std::string& filename)
-: impl_(new TreFileImpl(filename))
+TreReader::TreReader()
+: impl_(nullptr)
 {}
 
-uint32_t TreFile::GetResourceCount() const
+TreReader::TreReader(const std::string& filename)
+: impl_(new TreReaderImpl(filename))
+{}
+
+void TreReader::Initialize()
 {
+    impl_->Initialize();
+}
+
+uint32_t TreReader::GetResourceCount() const
+{
+    VerifyInitialization();
+
     return impl_->GetResourceCount();
 }
 
-vector<string> TreFile::GetResourceNames() const
+vector<string> TreReader::GetResourceNames() const
 {
+    VerifyInitialization();
+
     return impl_->GetResourceNames();
 }
 
-const string& TreFile::GetFilename() const
+const string& TreReader::GetFilename() const
 {
+    VerifyInitialization();
+
     return impl_->GetFilename();
 }
 
-vector<char> TreFile::GetResource(const string& resource_name)
+vector<char> TreReader::GetResource(const string& resource_name)
 {
+    VerifyInitialization();
+
     return impl_->GetResource(
 		impl_->GetResourceInfo(resource_name));
 }
 
-bool TreFile::ContainsResource(const string& resource_name) const
+bool TreReader::ContainsResource(const string& resource_name) const
 {
+    VerifyInitialization();
+
     return impl_->ContainsResource(resource_name);
 }
 
-string TreFile::GetMd5Hash(const string& resource_name) const
+string TreReader::GetMd5Hash(const string& resource_name) const
 {
+    VerifyInitialization();
+
     return impl_->GetMd5Hash(resource_name);
 }
 
-uint32_t TreFile::GetResourceSize(const string& resource_name) const
+uint32_t TreReader::GetResourceSize(const string& resource_name) const
 {
+    VerifyInitialization();
+
     return impl_->GetResourceSize(resource_name);
 }
 
-TreFile::TreFileImpl::TreFileImpl(std::string filename)
+void TreReader::VerifyInitialization() const
+{
+    if (!impl_->IsInitialized()) throw std::runtime_error("Attempted to use TreReader without initializing");
+}
+
+TreReader::TreReaderImpl::TreReaderImpl(std::string filename)
 : filename_(filename)
+, initialized_(false)
 {
     input_stream_.exceptions(ifstream::failbit | ifstream::badbit);
     input_stream_.open(filename_.c_str(), ios_base::binary);
 
     ReadHeader();
-    ReadIndex();
 }
 
-uint32_t TreFile::TreFileImpl::GetResourceCount() const
+void TreReader::TreReaderImpl::Initialize()
+{
+    if (!IsInitialized())
+    {
+        ReadIndex();
+        initialized_ = true;
+    }
+}
+
+bool TreReader::TreReaderImpl::IsInitialized() const
+{
+    return initialized_;
+}
+
+uint32_t TreReader::TreReaderImpl::GetResourceCount() const
 {
     return header_.resource_count;
 }
 
-const string& TreFile::TreFileImpl::GetFilename() const
+const string& TreReader::TreReaderImpl::GetFilename() const
 {
     return filename_;
 }
 
-std::vector<std::string> TreFile::TreFileImpl::GetResourceNames() const
+std::vector<std::string> TreReader::TreReaderImpl::GetResourceNames() const
 {
     std::vector<std::string> resource_names;
 
@@ -164,7 +190,7 @@ std::vector<std::string> TreFile::TreFileImpl::GetResourceNames() const
     return resource_names;
 }
 
-vector<char> TreFile::TreFileImpl::GetResource(const TreResourceInfo& file_info)
+vector<char> TreReader::TreReaderImpl::GetResource(const TreResourceInfo& file_info)
 {
     vector<char> data(file_info.data_size); 
     
@@ -178,7 +204,7 @@ vector<char> TreFile::TreFileImpl::GetResource(const TreResourceInfo& file_info)
     return data;
 }
 
-bool TreFile::TreFileImpl::ContainsResource(const string& resource_name) const
+bool TreReader::TreReaderImpl::ContainsResource(const string& resource_name) const
 {
     auto find_iter = find_if(
         begin(resource_block_),
@@ -191,7 +217,7 @@ bool TreFile::TreFileImpl::ContainsResource(const string& resource_name) const
     return find_iter != end(resource_block_);
 }
 
-string TreFile::TreFileImpl::GetMd5Hash(const string& resource_name) const
+string TreReader::TreReaderImpl::GetMd5Hash(const string& resource_name) const
 {
     auto find_iter = find_if(
         begin(resource_block_),
@@ -223,7 +249,7 @@ string TreFile::TreFileImpl::GetMd5Hash(const string& resource_name) const
     return ss.str();
 }
 
-uint32_t TreFile::TreFileImpl::GetResourceSize(const string& resource_name) const
+uint32_t TreReader::TreReaderImpl::GetResourceSize(const string& resource_name) const
 {
     auto find_iter = find_if(
         begin(resource_block_),
@@ -241,7 +267,7 @@ uint32_t TreFile::TreFileImpl::GetResourceSize(const string& resource_name) cons
     return find_iter->data_size;
 }
 
-const TreResourceInfo& TreFile::TreFileImpl::GetResourceInfo(const string& resource_name) const
+const TreResourceInfo& TreReader::TreReaderImpl::GetResourceInfo(const string& resource_name) const
 {
     auto find_iter = find_if(
         begin(resource_block_),
@@ -259,7 +285,7 @@ const TreResourceInfo& TreFile::TreFileImpl::GetResourceInfo(const string& resou
     return *find_iter;
 }
 
-void TreFile::TreFileImpl::ReadHeader()
+void TreReader::TreReaderImpl::ReadHeader()
 {
     {
         std::lock_guard<std::mutex> lg(mutex_);
@@ -270,7 +296,7 @@ void TreFile::TreFileImpl::ReadHeader()
     ValidateFileVersion(string(header_.file_version, 4));        
 }
 
-void TreFile::TreFileImpl::ReadIndex()
+void TreReader::TreReaderImpl::ReadIndex()
 {
     parallel_invoke(
         [this] { resource_block_ = ReadResourceBlock(); },
@@ -279,7 +305,7 @@ void TreFile::TreFileImpl::ReadIndex()
     );
 }
 
-vector<TreResourceInfo> TreFile::TreFileImpl::ReadResourceBlock()
+vector<TreResourceInfo> TreReader::TreReaderImpl::ReadResourceBlock()
 {
     uint32_t uncompressed_size = header_.resource_count * sizeof(TreResourceInfo);
     
@@ -294,7 +320,7 @@ vector<TreResourceInfo> TreFile::TreFileImpl::ReadResourceBlock()
     return files;
 }
         
-vector<char> TreFile::TreFileImpl::ReadNameBlock()
+vector<char> TreReader::TreReaderImpl::ReadNameBlock()
 {
     vector<char> data(header_.name_uncompressed_size); 
     
@@ -310,7 +336,7 @@ vector<char> TreFile::TreFileImpl::ReadNameBlock()
     return data;
 }
         
-vector<TreFile::TreFileImpl::Md5Sum> TreFile::TreFileImpl::ReadMd5SumBlock()
+vector<TreReader::TreReaderImpl::Md5Sum> TreReader::TreReaderImpl::ReadMd5SumBlock()
 {    
     uint32_t offset = header_.info_offset
         + header_.info_compressed_size
@@ -328,7 +354,7 @@ vector<TreFile::TreFileImpl::Md5Sum> TreFile::TreFileImpl::ReadMd5SumBlock()
     return data;
 }
 
-void TreFile::TreFileImpl::ValidateFileType(string file_type) const
+void TreReader::TreReaderImpl::ValidateFileType(string file_type) const
 {
     if (file_type.compare("EERT") != 0)
     {
@@ -336,7 +362,7 @@ void TreFile::TreFileImpl::ValidateFileType(string file_type) const
     }
 }
 
-void TreFile::TreFileImpl::ValidateFileVersion(string file_version) const
+void TreReader::TreReaderImpl::ValidateFileVersion(string file_version) const
 {
     if (file_version.compare("5000") != 0)
     {
@@ -344,7 +370,7 @@ void TreFile::TreFileImpl::ValidateFileVersion(string file_version) const
     }
 }
 
-void TreFile::TreFileImpl::ReadDataBlock(
+void TreReader::TreReaderImpl::ReadDataBlock(
     uint32_t offset,
     uint32_t compression,
     uint32_t compressed_size, 

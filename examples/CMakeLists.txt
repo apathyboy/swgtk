@@ -1,2 +1,3 @@
-add_subdirectory("file_info")
-add_subdirectory("header_reader")
+add_subdirectory(file_info)
+add_subdirectory(header_reader)
+add_subdirectory(toc_reader)

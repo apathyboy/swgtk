@@ -2,10 +2,10 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <tre/tre_file.h>
+#include <tre/tre_reader.h>
 
 using namespace std;
-using namespace tre;
+using namespace swgtk::tre;
 
 const std::string resource_name = "appearance/mesh/rock_formation_a1_l0.msh";
 
@@ -20,11 +20,11 @@ int main(int argc, char *argv[])
     string swg_directory(argv[1]);
 
     {
-        TreFile tre_file(swg_directory + "/patch_00.tre");
+        TreReader tre_reader(swg_directory + "/patch_00.tre");
 
         cout << "Loaded resource from archive:\n\n"
              << "   Name: " << swg_directory + "/bottom.tre" << "\n"
-             << "   File Count: " << tre_file.GetResourceCount() << "\n" << endl;
+             << "   File Count: " << tre_reader.GetResourceCount() << "\n" << endl;
 
         cout << "Finished indexing\n" << endl;
     }

@@ -1,18 +1,21 @@
 
-#ifndef TRE_FILE_H_
-#define TRE_FILE_H_
+#ifndef TRE_TRE_READER_H_
+#define TRE_TRE_READER_H_
 
 #include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
+namespace swgtk {
 namespace tre {
 
-    class TreFile
+    class TreReader
     {
     public:
-        explicit TreFile(const std::string& filename);
+        explicit TreReader(const std::string& filename);
+
+        void Initialize();
         
         bool ContainsResource(const std::string& resource_name) const;
         
@@ -29,10 +32,14 @@ namespace tre {
         std::string GetMd5Hash(const std::string& resource_name) const;
     
     private:
-        class TreFileImpl;
-        std::shared_ptr<TreFileImpl> impl_;
+        TreReader();
+
+        void VerifyInitialization() const;
+
+        class TreReaderImpl;
+        std::shared_ptr<TreReaderImpl> impl_;
     };
 
-}  // namespace tre
+}}  // namespace swgtk::tre
 
-#endif  // TRE_FILE_H_
+#endif  // TRE_TRE_READER_H_
