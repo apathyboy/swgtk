@@ -5,8 +5,8 @@
 
 #include <boost/chrono.hpp>
 
-#include <tre/tre_archive.h>
-#include <tre/tre_reader.h>
+#include <swgtk/tre/tre_archive.h>
+#include <swgtk/tre/tre_reader.h>
 
 using namespace std;
 using namespace swgtk::tre;
