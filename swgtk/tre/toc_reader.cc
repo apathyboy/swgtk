@@ -1,5 +1,5 @@
 
-#include "tre/toc_reader.h"
+#include "toc_reader.h"
 
 using namespace std;
 using namespace swgtk::tre;

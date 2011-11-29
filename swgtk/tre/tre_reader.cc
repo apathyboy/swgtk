@@ -1,17 +1,17 @@
 
-#include "tre/tre_reader.h"
+#include "tre_reader.h"
 
 #include <array>
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
-#include <mutex>
+#include <boost/thread/mutex.hpp>
 #include <sstream>
 #include <zlib.h>
 
 #include <ppl.h>
 
-#include "tre/tre_data.h"
+#include "tre_data.h"
 
 using namespace std;
 using namespace swgtk::tre;
@@ -66,7 +66,7 @@ private:
     std::string filename_;
     TreHeader header_;
 
-    std::mutex mutex_;
+    boost::mutex mutex_;
 
     std::vector<TreResourceInfo> resource_block_;
     std::vector<char> name_block_;
@@ -288,7 +288,7 @@ const TreResourceInfo& TreReader::TreReaderImpl::GetResourceInfo(const string& r
 void TreReader::TreReaderImpl::ReadHeader()
 {
     {
-        std::lock_guard<std::mutex> lg(mutex_);
+        boost::lock_guard<boost::mutex> lg(mutex_);
         input_stream_.read(reinterpret_cast<char*>(&header_), sizeof(header_));
     }
 
@@ -346,7 +346,7 @@ vector<TreReader::TreReaderImpl::Md5Sum> TreReader::TreReaderImpl::ReadMd5SumBlo
     vector<Md5Sum> data(size);
     
     {
-        std::lock_guard<std::mutex> lg(mutex_);
+        boost::lock_guard<boost::mutex> lg(mutex_);
         input_stream_.seekg(offset, ios_base::beg);
         input_stream_.read(reinterpret_cast<char*>(&data[0]), size);
     }
@@ -380,7 +380,7 @@ void TreReader::TreReaderImpl::ReadDataBlock(
     if (compression == 0)
     {
         {
-            std::lock_guard<std::mutex> lg(mutex_);
+            boost::lock_guard<boost::mutex> lg(mutex_);
             input_stream_.seekg(offset, ios_base::beg);
             input_stream_.read(buffer, uncompressed_size);
         }
@@ -390,7 +390,7 @@ void TreReader::TreReaderImpl::ReadDataBlock(
         vector<char> compressed_data(compressed_size);
         
         {
-            std::lock_guard<std::mutex> lg(mutex_);
+            boost::lock_guard<boost::mutex> lg(mutex_);
             input_stream_.seekg(offset, ios_base::beg);
             input_stream_.read(&compressed_data[0], compressed_size);
         }

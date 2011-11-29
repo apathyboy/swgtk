@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 2.8.6)
 project(swgtoolkit CXX)
 
 # set the path for custom cmake scripts
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/build-aux/cmake")
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build-aux/cmake")
 
 # include common scripts
 include(GroupSourcesByFilesystem)
@@ -16,7 +16,7 @@ endif()
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_MULTITHREADED ON)
 
-find_package(Boost 1.47.0 COMPONENTS chrono date_time regex thread system program_options filesystem serialization REQUIRED)
+find_package(Boost 1.48.0 COMPONENTS chrono date_time regex thread system program_options filesystem REQUIRED)
 find_package(ZLIB REQUIRED)
 
 if(MSVC)
@@ -25,8 +25,13 @@ if(MSVC)
 endif()
 
 include_directories(
-    ${CMAKE_SOURCE_DIR}/src
+    ${PROJECT_SOURCE_DIR}
+    ${Boost_INCLUDE_DIR}
 )
 
-add_subdirectory(src)
+link_directories(
+    ${Boost_LIBRARY_DIRS}
+)
+
+add_subdirectory(swgtk)
 add_subdirectory(examples)

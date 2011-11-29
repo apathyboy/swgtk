@@ -1,13 +1,17 @@
 
-#include <chrono>
 #include <iostream>
 #include <memory>
 #include <string>
+
+#include <boost/chrono.hpp>
+
 #include <tre/tre_archive.h>
 #include <tre/tre_reader.h>
 
 using namespace std;
 using namespace swgtk::tre;
+using boost::chrono::duration_cast;
+using boost::chrono::high_resolution_clock;
 
 const std::string resource_name = "appearance/mesh/ply_corl_house_lg_s01_fp1_r0_mesh_r0_l2.msh";
 
@@ -19,7 +23,7 @@ int main(int argc, char *argv[])
         exit(0);
     }
     
-    auto start_time = chrono::high_resolution_clock::now();
+    auto start_time = high_resolution_clock::now();
 
     string swg_directory(argv[1]);
 
@@ -89,9 +93,11 @@ int main(int argc, char *argv[])
              << endl;
     }
 
-    auto stop_time = chrono::high_resolution_clock::now();
+    auto stop_time = high_resolution_clock::now();
 
-    cout << "Duration: " << chrono::duration_cast<chrono::milliseconds>(stop_time - start_time).count() << "ms" << endl;
+    cout << "Duration: " << 
+        duration_cast<boost::chrono::milliseconds>
+            (stop_time - start_time).count() << "ms" << endl;
 
     return 0;
 }
