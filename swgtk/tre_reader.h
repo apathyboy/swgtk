@@ -1,6 +1,6 @@
 
-#ifndef TRE_TRE_READER_H_
-#define TRE_TRE_READER_H_
+#ifndef SWGTK_TRE_READER_H_
+#define SWGTK_TRE_READER_H_
 
 #include <cstdint>
 #include <memory>
@@ -8,7 +8,6 @@
 #include <vector>
 
 namespace swgtk {
-namespace tre {
 
     class TreReader
     {
@@ -40,6 +39,6 @@ namespace tre {
         std::shared_ptr<TreReaderImpl> impl_;
     };
 
-}}  // namespace swgtk::tre
+}  // namespace swgtk
 
-#endif  // TRE_TRE_READER_H_
+#endif  // SWGTK_TRE_READER_H_

@@ -2,7 +2,7 @@
 #include "toc_reader.h"
 
 using namespace std;
-using namespace swgtk::tre;
+using namespace swgtk;
 
 TocReader::TocReader(const string& filename)
 : filename_(filename)

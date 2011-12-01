@@ -1,11 +1,10 @@
 
-#ifndef TRE_TRE_DATA_H_
-#define TRE_TRE_DATA_H_
+#ifndef SWGTK_TRE_DATA_H_
+#define SWGTK_TRE_DATA_H_
 
 #include <cstdint>
 
 namespace swgtk {
-namespace tre {
 
 #pragma pack(1)
     struct TreHeader
@@ -32,6 +31,6 @@ namespace tre {
     };
 #pragma pack()
 
-}}  // namespace swgtk::tre
+}  // namespace swgtk
 
-#endif  // TRE_TRE_H_
+#endif  // SWGTK_TRE_DATA_H_

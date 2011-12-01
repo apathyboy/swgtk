@@ -6,9 +6,9 @@
 #include <swgtk/tre_reader.h>
 
 using namespace std;
-using namespace swgtk::tre;
+using namespace swgtk;
 
-const std::string resource_name = "appearance/mesh/rock_formation_a1_l0.msh";
+const string resource_name = "appearance/mesh/rock_formation_a1_l0.msh";
 
 int main(int argc, char *argv[])
 {

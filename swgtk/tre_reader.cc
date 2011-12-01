@@ -5,16 +5,16 @@
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
-#include <boost/thread/mutex.hpp>
 #include <sstream>
-#include <zlib.h>
 
+#include <boost/thread/mutex.hpp>
 #include <ppl.h>
+#include <zlib.h>
 
 #include "tre_data.h"
 
 using namespace std;
-using namespace swgtk::tre;
+using namespace swgtk;
 using namespace Concurrency;
 
 class TreReader::TreReaderImpl

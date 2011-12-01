@@ -9,11 +9,11 @@
 #include <swgtk/tre_reader.h>
 
 using namespace std;
-using namespace swgtk::tre;
+using namespace swgtk;
 using boost::chrono::duration_cast;
 using boost::chrono::high_resolution_clock;
 
-const std::string resource_name = "appearance/mesh/ply_corl_house_lg_s01_fp1_r0_mesh_r0_l2.msh";
+const string resource_name = "appearance/mesh/ply_corl_house_lg_s01_fp1_r0_mesh_r0_l2.msh";
 
 int main(int argc, char *argv[])
 {

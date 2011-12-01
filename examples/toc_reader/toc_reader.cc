@@ -6,9 +6,9 @@
 #include <swgtk/toc_reader.h>
 
 using namespace std;
-using namespace swgtk::tre;
+using namespace swgtk;
 
-const std::string toc_file = "sku3_client.toc";
+const string toc_file = "sku3_client.toc";
 
 int main(int argc, char *argv[])
 {

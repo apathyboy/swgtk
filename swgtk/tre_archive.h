@@ -1,6 +1,6 @@
 
-#ifndef TRE_TRE_ARCHIVE_H_
-#define TRE_TRE_ARCHIVE_H_
+#ifndef SWGTK_TRE_ARCHIVE_H_
+#define SWGTK_TRE_ARCHIVE_H_
 
 #include <cstdint>
 #include <memory>
@@ -11,7 +11,6 @@
 #include <ppl.h>
 
 namespace swgtk {
-namespace tre {
 
     template<typename T>
     class TreArchive
@@ -106,6 +105,6 @@ namespace tre {
         typedef std::vector<std::shared_ptr<T>> ReaderList;
         ReaderList readers_;
     };
-}}  // namespace swgtk::tre
+}  // namespace swgtk
 
-#endif  // TRE_TRE_ARCHIVE_H_
+#endif  // SWGTK_TRE_ARCHIVE_H_

@@ -1,6 +1,6 @@
 
-#ifndef TRE_TOC_READER_H_
-#define TRE_TOC_READER_H_
+#ifndef SWGTK_TOC_READER_H_
+#define SWGTK_TOC_READER_H_
 
 #include <cstdint>
 #include <fstream>
@@ -8,7 +8,6 @@
 #include <vector>
 
 namespace swgtk {
-namespace tre {
 
 #pragma pack(1)
 
@@ -56,6 +55,6 @@ namespace tre {
         std::string filename_;
 	};
 
-}}  // namespace swgtk::tre
+}  // namespace swgtk
 
-#endif  // TRE_TOC_READER_H_
+#endif  // SWGTK_TOC_READER_H_
