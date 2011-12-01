@@ -8,14 +8,12 @@
 #include <sstream>
 
 #include <boost/thread/mutex.hpp>
-#include <ppl.h>
 #include <zlib.h>
 
 #include "tre_data.h"
 
 using namespace std;
 using namespace swgtk;
-using namespace Concurrency;
 
 class TreReader::TreReaderImpl
 {
@@ -298,11 +296,9 @@ void TreReader::TreReaderImpl::ReadHeader()
 
 void TreReader::TreReaderImpl::ReadIndex()
 {
-    parallel_invoke(
-        [this] { resource_block_ = ReadResourceBlock(); },
-        [this] { name_block_ = ReadNameBlock(); },
-        [this] { md5sum_block_ = ReadMd5SumBlock(); }
-    );
+    resource_block_ = ReadResourceBlock();
+    name_block_ = ReadNameBlock();
+    md5sum_block_ = ReadMd5SumBlock();
 }
 
 vector<TreResourceInfo> TreReader::TreReaderImpl::ReadResourceBlock()
