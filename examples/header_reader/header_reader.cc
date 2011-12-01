@@ -2,7 +2,8 @@
 #include <iostream>
 #include <memory>
 #include <string>
-#include <swgtk/tre/tre_reader.h>
+
+#include <swgtk/tre_reader.h>
 
 using namespace std;
 using namespace swgtk::tre;
