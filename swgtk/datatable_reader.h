@@ -19,7 +19,13 @@ namespace swgtk {
         template<typename T>
         T GetValue() const
         {            
-            return boost::any_cast<T>(value_);
+            return *boost::any_cast<const T*>(value_);
+        }
+
+        template<>
+        std::string GetValue() const
+        {
+            return std::string(boost::any_cast<const char*>(value_));
         }
 
         template<typename T>

@@ -138,36 +138,26 @@ uint32_t DatatableReader::ParseColumn(uint8_t type, uint32_t offset, vector<Data
 
     switch(type)
     {
-    case 'b':
-        if (*(reinterpret_cast<const int*>(row_offset_ + offset)) == 1) {
-            cell.SetValue(true);
-        } else {
-            cell.SetValue(false);
-        }
-
-        size = 4;
-
-        break;
-
     case 'f':
-        cell.SetValue(*(reinterpret_cast<const float*>(row_offset_ + offset)));
+        cell.SetValue(reinterpret_cast<const float*>(row_offset_ + offset));
 
         size = 4;
         break;
-
+        
+    case 'b':
     case 'h':
     case 'e':
     case 'i':
-        cell.SetValue(*(reinterpret_cast<const int*>(row_offset_ + offset)));
+        cell.SetValue(reinterpret_cast<const int*>(row_offset_ + offset));
 
         size = 4;
         break;
 
     case 's':
-        string str(row_offset_ + offset);
-        cell.SetValue(str);
+        cell.SetValue(row_offset_ + offset);
         
-        size = str.length() + 1;
+        string tmp(row_offset_ + offset);
+        size = tmp.length() + 1;
         break;
     }    
 
@@ -182,21 +172,21 @@ string DatatableCell::ToString() const
 
     try 
     {
-        if (value_.type() == typeid(int))
+        if (value_.type() == typeid(const int*))
         {
-            str = boost::lexical_cast<string>(boost::any_cast<int>(value_));
+            str = boost::lexical_cast<string>(*boost::any_cast<const int*>(value_));
         }  
-        else if (value_.type() == typeid(bool))
+        else if (value_.type() == typeid(const bool*))
         {
-            str = boost::lexical_cast<string>(boost::any_cast<bool>(value_));
+            str = boost::lexical_cast<string>(*boost::any_cast<const bool*>(value_));
         }
-        else if (value_.type() == typeid(float))
+        else if (value_.type() == typeid(const float*))
         {
-            str = boost::lexical_cast<string>(boost::any_cast<float>(value_));
+            str = boost::lexical_cast<string>(*boost::any_cast<const float*>(value_));
         }
-        else if (value_.type() == typeid(string))
+        else if (value_.type() == typeid(const char*))
         {
-            str = boost::any_cast<string>(value_);
+            str = boost::any_cast<const char*>(value_);
         }
         else
         {
