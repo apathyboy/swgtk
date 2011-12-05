@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 2.8.6)
 
-project(swgtoolkit CXX)
+project(swgtk CXX)
 
 # set the path for custom cmake scripts
 set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/build-aux/cmake")
 
 # include common scripts
 include(GroupSourcesByFilesystem)
+include(CheckIncludeFiles)
 
 if(DEFINED VENDOR_PREFIX)
     set(BOOST_ROOT ${VENDOR_PREFIX}/boost)
@@ -34,4 +35,7 @@ link_directories(
 )
 
 add_subdirectory(swgtk)
-add_subdirectory(examples)
+
+if(BUILD_EXAMPLES)
+    add_subdirectory(examples)
+endif()

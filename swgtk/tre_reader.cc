@@ -21,6 +21,7 @@ public:
     TreReaderImpl(std::string filename);
     
     void Initialize();
+
     bool IsInitialized() const;
 
     bool ContainsResource(const std::string& resource_name) const;

@@ -8,23 +8,21 @@
 using namespace std;
 using namespace swgtk;
 
-const string resource_name = "appearance/mesh/rock_formation_a1_l0.msh";
-
 int main(int argc, char *argv[])
 {
     if (argc != 2)
     {
-        cout << "Usage: " << argv[0] << " <path to swg directory>" << endl;
+        cout << "Usage: " << argv[0] << " <path to tre file>" << endl;
         exit(0);
     }
 
-    string swg_directory(argv[1]);
+    string resource_name(argv[1]);
 
     {
-        TreReader tre_reader(swg_directory + "/patch_00.tre");
+        TreReader tre_reader(resource_name);
 
         cout << "Loaded resource from archive:\n\n"
-             << "   Name: " << swg_directory + "/bottom.tre" << "\n"
+             << "   Name: " << resource_name << "\n"
              << "   File Count: " << tre_reader.GetResourceCount() << "\n" << endl;
 
         cout << "Finished indexing\n" << endl;

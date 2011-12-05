@@ -8,8 +8,6 @@
 #include <vector>
 #include <unordered_map>
 
-#include <ppl.h>
-
 namespace swgtk {
 
     template<typename T>
@@ -19,7 +17,7 @@ namespace swgtk {
         explicit TreArchive(std::vector<std::shared_ptr<T>> readers)
             : readers_(readers)
         {        
-            Concurrency::parallel_for_each(
+            std::for_each(
                 begin(readers_),
                 end(readers_),
                 [this] (const shared_ptr<T>& reader)

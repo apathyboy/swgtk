@@ -8,25 +8,23 @@
 using namespace std;
 using namespace swgtk;
 
-const string toc_file = "sku3_client.toc";
-
 int main(int argc, char *argv[])
 {
     if (argc != 2)
     {
-        cout << "Usage: " << argv[0] << " <path to swg directory>" << endl;
+        cout << "Usage: " << argv[0] << " <path to toc file>" << endl;
         exit(0);
     }
 
-    string swg_directory(argv[1]);
+    string toc_file(argv[1]);
 
     {
-        TocReader toc_reader(swg_directory + "/" + toc_file);
+        TocReader toc_reader(toc_file);
 
 		auto header = toc_reader.GetHeader();
 
         cout << "Loaded resource from archive:\n\n"
-             << "   Name: " << swg_directory + "/" + toc_file << "\n"
+             << "   Name: " << toc_file << "\n"
 			 << "	File Type: " << header.file_type << "\n"
 			 << "	File Version: " << header.file_version << "\n"
 			 << "	Format: " << header.format << "\n"
@@ -36,7 +34,6 @@ int main(int argc, char *argv[])
 			 << "	? Size: " << header.size << "\n"
 			 << "	Tre Count: " << header.tre_count << "\n"
 			 << "	Tre Name Size: " << header.tre_name_size << "\n" << endl;
-
     }
 
     return 0;
