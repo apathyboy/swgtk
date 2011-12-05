@@ -98,6 +98,9 @@ int main(int argc, char *argv[])
         {
             cout << "[" << rowdata.first << "] = " << rowdata.second->ToString() << "\n";
         });
+
+        cout << "\nAccess row cell directly:\n";
+        cout << "    [commandName] = " << row["commandName"]->GetValue<string>() << "\n\n";
     }
 
     auto stop_time = high_resolution_clock::now();
