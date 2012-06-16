@@ -22,12 +22,6 @@ namespace swgtk {
             return *boost::any_cast<const T*>(value_);
         }
 
-        template<>
-        std::string GetValue() const
-        {
-            return std::string(boost::any_cast<const char*>(value_));
-        }
-
         template<typename T>
         void SetValue(T value)
         {
@@ -37,6 +31,12 @@ namespace swgtk {
     private:
         boost::any value_;
     };
+
+    template<>
+    std::string DatatableCell::GetValue() const
+    {
+        return std::string(boost::any_cast<const char*>(value_));
+    }
 
     class DatatableReader 
     {
@@ -76,9 +76,9 @@ namespace swgtk {
             uint32_t count;
         };
 
-        uint32_t current_row_;
-
         std::vector<char> input_;
+
+        uint32_t current_row_;
 
         const ColumnHeader* column_header_;
         const char* column_offset_;

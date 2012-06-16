@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <sstream>
 
+#include <boost/lexical_cast.hpp>
 #include <boost/thread/mutex.hpp>
 #include <zlib.h>
 
@@ -59,11 +60,11 @@ private:
 		uint32_t uncompressed_size, 
 		char* buffer);
 
-    bool initialized_;
-
     std::ifstream input_stream_;
     std::string filename_;
     TreHeader header_;
+
+    bool initialized_;
 
     boost::mutex mutex_;
 
@@ -400,7 +401,7 @@ void TreReader::TreReaderImpl::ReadDataBlock(
 
         if (result != Z_OK)
         {
-            throw std::runtime_error("ZLib error: " + result);
+            throw std::runtime_error("ZLib error: " + boost::lexical_cast<std::string>(result));
         }
     }
     else
