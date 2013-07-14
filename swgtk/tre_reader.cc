@@ -9,6 +9,7 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/lock_guard.hpp>
 #include <zlib.h>
 
 #include "tre_data.h"
