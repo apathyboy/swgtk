@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 2.8.6)
 
 project(swgtk CXX)
 
+cmake_policy(VERSION 2.8.11.20130628-g46c95)
+cmake_policy(SET CMP0022 NEW)
+
 # current source version
 set(swgtk_VERSION_MAJOR 1)
 set(swgtk_VERSION_MINOR 2)
@@ -66,6 +69,8 @@ set(Boost_USE_MULTITHREADED ON)
 
 find_package(Boost 1.54.0 COMPONENTS filesystem REQUIRED)
 find_package(ZLIB REQUIRED)
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 
 add_subdirectory(swgtk)
 

@@ -14,6 +14,10 @@ add_library(swgtk
     ${SOURCES}
 )
 
+target_link_libraries(swgtk
+    ${ZLIB_LIBRARY}
+)
+
 if(WIN32)
     # Create a custom built user configuration so that the "run in debug mode"
     # works without any issues.

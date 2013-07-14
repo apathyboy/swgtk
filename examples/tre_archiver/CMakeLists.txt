@@ -11,8 +11,9 @@ add_executable(tre_archiver
 
 target_link_libraries(tre_archiver
     swgtk
-    ${ZLIB_LIBRARIES}
 )
+
+set_target_properties(tre_archiver PROPERTIES FOLDER "examples")
 
 if(WIN32)
     configure_file(${PROJECT_SOURCE_DIR}/tools/windows/user_project.vcxproj.in

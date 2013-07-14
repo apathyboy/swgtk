@@ -3,6 +3,8 @@
 #define SWGTK_TRE_ARCHIVE_H_
 
 #include <cstdint>
+
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -20,7 +22,7 @@ namespace swgtk {
             std::for_each(
                 begin(readers_),
                 end(readers_),
-                [this] (const shared_ptr<T>& reader)
+                [this] (const std::shared_ptr<T>& reader)
             {
                 reader->Initialize();
             });

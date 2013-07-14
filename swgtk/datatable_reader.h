@@ -10,6 +10,30 @@
 #include <boost/any.hpp>
 
 namespace swgtk {
+	
+    namespace detail {
+        /**
+         * Attempts to cast the cell's value to the specified type T.
+         *
+         * \return The cell's value cast as the given type T.
+         */
+        template<typename T>
+        T GetValue(const boost::any& value)
+        {
+            return *boost::any_cast<const T*>(value);
+        }
+
+        /**
+         * An overload of GetValue that can turn char* into string.
+         *
+         * \return The cell's value as a string.
+         */
+        template<>
+        inline std::string GetValue<std::string>(const boost::any& value)
+        {
+            return std::string(boost::any_cast<const char*>(value));
+        }
+    }
 
     class DatatableCell
     {
@@ -19,7 +43,7 @@ namespace swgtk {
         template<typename T>
         T GetValue() const
         {            
-            return *boost::any_cast<const T*>(value_);
+            return detail::GetValue<T>(value_);
         }
 
         template<typename T>
@@ -31,13 +55,7 @@ namespace swgtk {
     private:
         boost::any value_;
     };
-
-    template<>
-    std::string DatatableCell::GetValue() const
-    {
-        return std::string(boost::any_cast<const char*>(value_));
-    }
-
+	
     class DatatableReader 
     {
     public:

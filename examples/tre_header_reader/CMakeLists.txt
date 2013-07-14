@@ -11,8 +11,9 @@ add_executable(tre_header_reader
 
 target_link_libraries(tre_header_reader
     swgtk
-    ${ZLIB_LIBRARIES}
 )
+
+set_target_properties(tre_header_reader PROPERTIES FOLDER "examples")
 
 if(WIN32)
     configure_file(${PROJECT_SOURCE_DIR}/tools/windows/user_project.vcxproj.in
