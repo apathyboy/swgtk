@@ -1,4 +1,2 @@
-add_subdirectory(datatable_reader)
-add_subdirectory(toc_header_reader)
-add_subdirectory(tre_archiver)
-add_subdirectory(tre_header_reader)
+
+add_subdirectory(getheight)

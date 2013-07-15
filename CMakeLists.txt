@@ -60,17 +60,19 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 if(DEFINED VENDOR_PREFIX)
     set(BOOST_ROOT ${VENDOR_PREFIX})
+    set(GLM_ROOT ${VENDOR_PREFIX})
     set(ZLIB_ROOT ${VENDOR_PREFIX})
 endif()
 
-add_definitions(-DBOOST_ALL_NO_LIB)
 set(Boost_USE_STATIC_LIBS OFF)
 set(Boost_USE_MULTITHREADED ON)
 
-find_package(Boost 1.54.0 COMPONENTS filesystem REQUIRED)
+find_package(Boost 1.54.0 COMPONENTS filesystem system unit_test_framework REQUIRED)
+find_package(Glm REQUIRED)
 find_package(ZLIB REQUIRED)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+link_directories(${Boost_LIBRARY_DIRS})
 
 add_subdirectory(swgtk)
 
